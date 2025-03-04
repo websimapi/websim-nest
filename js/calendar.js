@@ -292,38 +292,40 @@ function renderMonthView(container) {
     const dayEnd = new Date(date);
     dayEnd.setHours(23, 59, 59, 999);
     
-    const dayEvents = getEventsForDateRange(dayStart, dayEnd, calendarCache.events) || [];
+    const dayEvents = getEventsForDateRange(dayStart, dayEnd, calendarCache.events);
     
     // Add events to day cell
-    dayEvents.slice(0, 3).forEach(event => {
-      const eventElement = document.createElement('div');
-      eventElement.className = 'event';
-      eventElement.dataset.eventId = event.id;
-      
-      if (event.colorId) {
-        eventElement.style.backgroundColor = getColorForId(event.colorId);
-      }
-      
-      // Format time if not an all-day event
-      let eventTime = '';
-      if (event.start.dateTime) {
-        const startTime = new Date(event.start.dateTime);
-        eventTime = startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      }
-      
-      eventElement.innerHTML = `
-        ${eventTime ? `<span class="event-time">${eventTime}</span>` : ''}
-        <span class="event-title">${event.summary}</span>
-      `;
-      
-      // Add click event listener
-      eventElement.addEventListener('click', () => showEventDetails(event));
-      
-      eventContainer.appendChild(eventElement);
-    });
+    if (Array.isArray(dayEvents)) {
+      dayEvents.slice(0, 3).forEach(event => {
+        const eventElement = document.createElement('div');
+        eventElement.className = 'event';
+        eventElement.dataset.eventId = event.id;
+        
+        if (event.colorId) {
+          eventElement.style.backgroundColor = getColorForId(event.colorId);
+        }
+        
+        // Format time if not an all-day event
+        let eventTime = '';
+        if (event.start.dateTime) {
+          const startTime = new Date(event.start.dateTime);
+          eventTime = startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+        
+        eventElement.innerHTML = `
+          ${eventTime ? `<span class="event-time">${eventTime}</span>` : ''}
+          <span class="event-title">${event.summary}</span>
+        `;
+        
+        // Add click event listener
+        eventElement.addEventListener('click', () => showEventDetails(event));
+        
+        eventContainer.appendChild(eventElement);
+      });
+    }
     
     // Show indicator if there are more events
-    if (dayEvents.length > 3) {
+    if (Array.isArray(dayEvents) && dayEvents.length > 3) {
       const moreIndicator = document.createElement('div');
       moreIndicator.className = 'more-events';
       moreIndicator.textContent = `+${dayEvents.length - 3} more`;
@@ -1566,21 +1568,27 @@ async function moveEventToDate(event, targetDate) {
 // Get events for a date range
 function getEventsForDateRange(startDate, endDate, eventsArray = null) {
   // Use provided events array or the cached events
-  const events = eventsArray || calendarCache.events;
+  const events = eventsArray || calendarCache.events || [];
   
-  if (!events || events.length === 0) {
+  if (!events || !Array.isArray(events) || events.length === 0) {
     return [];
   }
   
   return events.filter(event => {
     // Get event start/end times
-    const eventStart = event.start.dateTime 
+    const eventStart = event.start?.dateTime 
       ? new Date(event.start.dateTime)
-      : new Date(event.start.date);
+      : event.start?.date 
+        ? new Date(event.start.date)
+        : null;
     
-    const eventEnd = event.end.dateTime
+    const eventEnd = event.end?.dateTime
       ? new Date(event.end.dateTime)
-      : new Date(event.end.date);
+      : event.end?.date
+        ? new Date(event.end.date)
+        : null;
+    
+    if (!eventStart || !eventEnd) return false;
     
     // Check if event overlaps with the specified range
     return eventStart < endDate && eventEnd > startDate;

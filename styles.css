@@ -1783,15 +1783,21 @@ input:checked + .toggle-slider:before {
   margin-top: 32px;
 }
 
+#chore-chart-section h2 {
+  margin-bottom: 16px;
+  font-weight: 500;
+}
+
 .chore-chart {
   background-color: var(--background-light);
   border-radius: var(--border-radius);
   overflow: hidden;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
 }
 
 .chore-chart-header {
   display: flex;
+  background-color: var(--background-off);
 }
 
 .chore-chart-cell {
@@ -1803,62 +1809,180 @@ input:checked + .toggle-slider:before {
 }
 
 .header-cell {
-  background-color: var(--background-off);
   font-weight: 500;
+  padding: 16px 12px;
 }
 
-.day-cell {
+.member-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 8px;
+}
+
+.member-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.member-name {
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.day-name-cell {
+  flex: 0 0 120px;
   font-weight: 500;
   background-color: var(--background-off);
 }
 
 .chore-chart-row {
   display: flex;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.chore-chart-row:last-child {
+  border-bottom: none;
+}
+
+.chore-chart-row.today-row {
+  background-color: rgba(66, 133, 244, 0.05);
+}
+
+.day-cell {
+  flex: 0 0 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--background-off);
+  font-weight: 500;
+  position: relative;
+}
+
+.day-name {
+  font-size: 14px;
+}
+
+.today-badge {
+  font-size: 12px;
+  color: white;
+  background-color: var(--primary-color);
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-top: 4px;
 }
 
 .chore-cell {
-  flex: 1;
   padding: 8px;
-  border-bottom: 1px solid var(--border-color);
-  border-right: 1px solid var(--border-color);
+}
+
+.chore-cell.today-cell {
+  box-shadow: inset 0 0 0 2px rgba(66, 133, 244, 0.2);
+}
+
+.chore-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .chore-item {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 4px 8px;
-  margin-bottom: 4px;
+  padding: 8px;
   background-color: var(--background-off);
   border-radius: 4px;
+  font-size: 14px;
 }
 
 .chore-item.completed {
+  opacity: 0.7;
+}
+
+.chore-item.completed .chore-title {
   text-decoration: line-through;
   color: var(--text-secondary);
 }
 
-.recurrence-note {
-  display: flex;
-  align-items: center;
-  padding: 8px 12px;
-  background-color: rgba(251, 188, 5, 0.1);
-  border-radius: 4px;
-  color: var(--text-secondary);
-}
-
-.recurrence-note i {
+.chore-checkbox {
   margin-right: 8px;
-  color: var(--warning-color);
+  position: relative;
+  width: 18px;
+  height: 18px;
 }
 
-.confirmation-dialog {
-  text-align: center;
-  padding: 16px;
+.chore-checkbox input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
 }
 
-.confirmation-dialog.warning {
-  color: var(--accent-color);
+.chore-checkbox label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 18px;
+  height: 18px;
+  background-color: white;
+  border: 2px solid var(--border-color);
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.chore-checkbox input:checked + label {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.chore-checkbox input:checked + label:after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 2px;
+  width: 5px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.no-chores {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  min-height: 40px;
+}
+
+.add-chore-btn {
+  opacity: 0.3;
+  transition: opacity 0.2s;
+}
+
+.add-chore-btn:hover {
+  opacity: 1;
+}
+
+.form-info {
+  background-color: var(--background-off);
+  padding: 10px 16px;
+  border-radius: 4px;
+  margin-bottom: 16px;
 }
 
 /* Meal Planning Styles */

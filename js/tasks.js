@@ -1483,12 +1483,6 @@ async function updateTaskStatus(taskId, newStatus) {
   }
 }
 
-// Get all tasks from the database
-async function getAllTasks() {
-  if (!db) throw new Error('Database not initialized');
-  return db.getAll(stores.tasks);
-}
-
 // Load the chore chart
 async function loadChoreChart() {
   // Get the chore chart container
@@ -1531,10 +1525,13 @@ async function loadChoreChart() {
   // Create chore chart
   let html = `
     <div class="chore-chart-header">
-      <div class="chore-chart-cell header-cell"></div>
+      <div class="chore-chart-cell header-cell day-name-cell">Day</div>
       ${familyMembers.map(member => `
-        <div class="chore-chart-cell header-cell" style="background-color: ${member.color}">
-          ${member.name}
+        <div class="chore-chart-cell header-cell member-cell" style="background-color: ${member.color}40; border-bottom: 3px solid ${member.color}">
+          <div class="member-avatar" style="background-color: ${member.color}">
+            ${member.name.charAt(0).toUpperCase()}
+          </div>
+          <div class="member-name">${member.name}</div>
         </div>
       `).join('')}
     </div>
@@ -1545,9 +1542,15 @@ async function loadChoreChart() {
   
   // Create rows for each day
   days.forEach(day => {
+    // Check if today
+    const isToday = new Date().toLocaleDateString('en-US', { weekday: 'long' }) === day;
+    
     html += `
-      <div class="chore-chart-row">
-        <div class="chore-chart-cell day-cell">${day}</div>
+      <div class="chore-chart-row ${isToday ? 'today-row' : ''}">
+        <div class="chore-chart-cell day-cell">
+          <div class="day-name">${day}</div>
+          ${isToday ? '<div class="today-badge">Today</div>' : ''}
+        </div>
         ${familyMembers.map(member => {
           const dayChores = choresByAssignee[member.id].filter(chore => {
             const dueDate = new Date(chore.dueDate);
@@ -1555,13 +1558,26 @@ async function loadChoreChart() {
           });
           
           return `
-            <div class="chore-chart-cell chore-cell">
-              ${dayChores.length > 0 ? dayChores.map(chore => `
-                <div class="chore-item ${chore.completed ? 'completed' : ''}" title="${chore.title}">
-                  <span class="chore-title">${chore.title}</span>
-                  <input type="checkbox" ${chore.completed ? 'checked' : ''} data-task-id="${chore.id}" class="task-checkbox">
+            <div class="chore-chart-cell chore-cell ${isToday ? 'today-cell' : ''}">
+              ${dayChores.length > 0 ? `
+                <div class="chore-list">
+                  ${dayChores.map(chore => `
+                    <div class="chore-item ${chore.completed ? 'completed' : ''}" title="${chore.title}">
+                      <div class="chore-checkbox">
+                        <input type="checkbox" id="chore-${chore.id}" ${chore.completed ? 'checked' : ''} data-task-id="${chore.id}" class="task-checkbox">
+                        <label for="chore-${chore.id}"></label>
+                      </div>
+                      <span class="chore-title">${chore.title}</span>
+                    </div>
+                  `).join('')}
                 </div>
-              `).join('') : ''}
+              ` : `
+                <div class="no-chores">
+                  <button class="btn btn-icon add-chore-btn" data-day="${day}" data-assignee="${member.id}">
+                    <i class="material-icons">add</i>
+                  </button>
+                </div>
+              `}
             </div>
           `;
         }).join('')}
@@ -1575,4 +1591,129 @@ async function loadChoreChart() {
   choreChart.querySelectorAll('.task-checkbox').forEach(checkbox => {
     checkbox.addEventListener('change', handleTaskCheckboxChange);
   });
+  
+  // Add event listeners to add chore buttons
+  choreChart.querySelectorAll('.add-chore-btn').forEach(button => {
+    button.addEventListener('click', (e) => {
+      const day = e.currentTarget.dataset.day;
+      const assigneeId = e.currentTarget.dataset.assignee;
+      showAddChoreModal(day, assigneeId);
+    });
+  });
+}
+
+// Show modal to add a chore for a specific day and assignee
+function showAddChoreModal(day, assigneeId) {
+  // Find assignee details
+  let assigneeName = 'Unassigned';
+  if (assigneeId === appState.currentUser.id) {
+    assigneeName = appState.currentUser.name;
+  } else {
+    const familyMember = appState.family.find(m => m.id === assigneeId);
+    if (familyMember) {
+      assigneeName = familyMember.name;
+    }
+  }
+  
+  // Calculate the date for the specified day
+  const today = new Date();
+  const currentDayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
+  const targetDayOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].indexOf(day);
+  
+  // Calculate days to add to get to target day
+  let daysToAdd = targetDayOfWeek - currentDayOfWeek;
+  if (daysToAdd <= 0) daysToAdd += 7; // If target day is today or earlier, go to next week
+  
+  const targetDate = new Date(today);
+  targetDate.setDate(today.getDate() + daysToAdd);
+  
+  // Format date for input
+  const formattedDate = targetDate.toISOString().slice(0, 10);
+  
+  const content = `
+    <form id="add-chore-form" class="task-form">
+      <div class="form-info">
+        <p>Adding chore for <strong>${assigneeName}</strong> on <strong>${day}</strong></p>
+      </div>
+      <div class="form-group">
+        <label for="chore-title">Chore Title *</label>
+        <input type="text" id="chore-title" required placeholder="Enter chore title">
+      </div>
+      <div class="form-group">
+        <label for="chore-description">Description</label>
+        <textarea id="chore-description" rows="2" placeholder="Optional description"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="chore-date">Date</label>
+          <input type="date" id="chore-date" value="${formattedDate}">
+        </div>
+        <div class="form-group">
+          <label for="chore-priority">Priority</label>
+          <select id="chore-priority">
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+      </div>
+      <input type="hidden" id="chore-assignee" value="${assigneeId}">
+    </form>
+  `;
+  
+  showModal('Add Chore', content, handleAddChore);
+}
+
+// Handle adding a new chore
+async function handleAddChore() {
+  const form = document.getElementById('add-chore-form');
+  
+  // Basic validation
+  if (!form.checkValidity()) {
+    showNotification('Please fill out all required fields', 'error');
+    return;
+  }
+  
+  try {
+    const title = document.getElementById('chore-title').value;
+    const description = document.getElementById('chore-description').value;
+    const date = document.getElementById('chore-date').value;
+    const priority = document.getElementById('chore-priority').value;
+    const assigneeId = document.getElementById('chore-assignee').value;
+    
+    // Create task object
+    const task = {
+      id: 'task_' + Date.now(),
+      title: title,
+      description: description,
+      assigneeId: assigneeId,
+      priority: priority,
+      dueDate: new Date(date + 'T12:00:00').toISOString(),
+      status: 'todo',
+      completed: false,
+      completedDate: null,
+      category: 'chore',
+      createdBy: appState.currentUser.id,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    // Save to database
+    await addTask(task);
+    
+    showNotification('Chore added successfully', 'success');
+    
+    // Refresh chore chart
+    loadChoreChart();
+    
+  } catch (error) {
+    console.error('Error adding chore:', error);
+    showNotification('Failed to add chore', 'error');
+  }
+}
+
+// Get all tasks from the database
+async function getAllTasks() {
+  if (!db) throw new Error('Database not initialized');
+  return db.getAll(stores.tasks);
 }

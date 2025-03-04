@@ -1657,11 +1657,91 @@ function showAddChoreModal(day, assigneeId) {
           </select>
         </div>
       </div>
+      <div class="form-group">
+        <label for="chore-recurrence">Repeat</label>
+        <select id="chore-recurrence">
+          <option value="none">Does not repeat</option>
+          <option value="daily">Daily</option>
+          <option value="weekly" selected>Weekly</option>
+          <option value="monthly">Monthly</option>
+          <option value="custom">Custom...</option>
+        </select>
+      </div>
+      <div id="recurrence-details" class="hidden">
+        <!-- Will be shown if custom recurrence is selected -->
+      </div>
       <input type="hidden" id="chore-assignee" value="${assigneeId}">
     </form>
   `;
   
   showModal('Add Chore', content, handleAddChore);
+  
+  // Handle recurrence selection
+  document.getElementById('chore-recurrence').addEventListener('change', function() {
+    const recurrenceDetails = document.getElementById('recurrence-details');
+    
+    if (this.value === 'custom') {
+      recurrenceDetails.classList.remove('hidden');
+      recurrenceDetails.innerHTML = `
+        <div class="form-row">
+          <div class="form-group">
+            <label for="recurrence-interval">Repeat every</label>
+            <div class="input-with-select">
+              <input type="number" id="recurrence-interval" min="1" value="1">
+              <select id="recurrence-period">
+                <option value="day">day(s)</option>
+                <option value="week">week(s)</option>
+                <option value="month">month(s)</option>
+                <option value="year">year(s)</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="recurrence-ends">Ends</label>
+            <select id="recurrence-ends">
+              <option value="never">Never</option>
+              <option value="after">After</option>
+              <option value="on-date">On date</option>
+            </select>
+          </div>
+        </div>
+        
+        <div id="recurrence-ends-details"></div>
+      `;
+      
+      // Add listener for ends selection
+      document.getElementById('recurrence-ends').addEventListener('change', function() {
+        const endsDetails = document.getElementById('recurrence-ends-details');
+        
+        if (this.value === 'after') {
+          endsDetails.innerHTML = `
+            <div class="form-group">
+              <label for="recurrence-count">Occurrences</label>
+              <input type="number" id="recurrence-count" min="1" value="10">
+            </div>
+          `;
+        } else if (this.value === 'on-date') {
+          const threeMonthsLater = new Date();
+          threeMonthsLater.setMonth(threeMonthsLater.getMonth() + 3);
+          
+          endsDetails.innerHTML = `
+            <div class="form-group">
+              <label for="recurrence-until">End date</label>
+              <input type="date" id="recurrence-until" value="${threeMonthsLater.toISOString().split('T')[0]}">
+            </div>
+          `;
+        } else {
+          endsDetails.innerHTML = '';
+        }
+      });
+      
+      // Trigger initial ends display
+      document.getElementById('recurrence-ends').dispatchEvent(new Event('change'));
+    } else {
+      recurrenceDetails.classList.add('hidden');
+    }
+  });
 }
 
 // Handle adding a new chore
@@ -1680,6 +1760,36 @@ async function handleAddChore() {
     const date = document.getElementById('chore-date').value;
     const priority = document.getElementById('chore-priority').value;
     const assigneeId = document.getElementById('chore-assignee').value;
+    const recurrence = document.getElementById('chore-recurrence').value;
+    
+    // Build recurrence rule if applicable
+    let recurrenceRule = null;
+    
+    if (recurrence !== 'none') {
+      if (recurrence === 'custom') {
+        const interval = document.getElementById('recurrence-interval').value;
+        const period = document.getElementById('recurrence-period').value;
+        const ends = document.getElementById('recurrence-ends').value;
+        
+        recurrenceRule = {
+          frequency: period,
+          interval: parseInt(interval),
+          ends: ends
+        };
+        
+        if (ends === 'after') {
+          recurrenceRule.count = parseInt(document.getElementById('recurrence-count').value);
+        } else if (ends === 'on-date') {
+          recurrenceRule.until = document.getElementById('recurrence-until').value;
+        }
+      } else {
+        recurrenceRule = {
+          frequency: recurrence,
+          interval: 1,
+          ends: 'never'
+        };
+      }
+    }
     
     // Create task object
     const task = {
@@ -1693,6 +1803,7 @@ async function handleAddChore() {
       completed: false,
       completedDate: null,
       category: 'chore',
+      recurrence: recurrenceRule,
       createdBy: appState.currentUser.id,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -1700,6 +1811,11 @@ async function handleAddChore() {
     
     // Save to database
     await addTask(task);
+    
+    // Create recurring tasks if needed
+    if (recurrenceRule) {
+      createRecurringTasks(task);
+    }
     
     showNotification('Chore added successfully', 'success');
     

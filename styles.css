@@ -1721,7 +1721,7 @@ input:checked + .toggle-slider:before {
   padding: 8px 0;
 }
 
-.task!-.header {
+.task-header {
   padding: 16px;
   margin-bottom: 16px;
   position: relative;
@@ -1829,4 +1829,363 @@ input:checked + .toggle-slider:before {
 
 .confirmation-dialog.warning {
   color: var(--accent-color);
+}
+
+/* Meal Planning Styles */
+.meal-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.date-navigation {
+  display: flex;
+  align-items: center;
+}
+
+.date-navigation h2 {
+  margin: 0 16px;
+  font-weight: 400;
+}
+
+.meal-planner {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.meal-calendar {
+  background-color: var(--background-light);
+  border-radius: var(--border-radius);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.meal-calendar-header {
+  display: flex;
+  background-color: var(--background-off);
+  font-weight: 500;
+}
+
+.meal-calendar-cell {
+  flex: 1;
+  padding: 12px 8px;
+  text-align: center;
+  border-bottom: 1px solid var(--border-color);
+  border-right: 1px solid var(--border-color);
+}
+
+.meal-calendar-row {
+  display: flex;
+}
+
+.meal-calendar-row.today {
+  background-color: rgba(66, 133, 244, 0.05);
+}
+
+.day-cell {
+  flex: 0 0 100px;
+  background-color: var(--background-off);
+  font-weight: 500;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.day-name {
+  font-weight: 500;
+}
+
+.day-date {
+  font-size: 1.2rem;
+}
+
+.meal-cell {
+  flex: 1;
+  min-height: 100px;
+  padding: 8px;
+  position: relative;
+}
+
+.meal-item {
+  background-color: var(--background-off);
+  border-radius: 4px;
+  padding: 8px;
+  margin-bottom: 8px;
+  position: relative;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.meal-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+
+.meal-name {
+  font-weight: 500;
+  margin-bottom: 4px;
+  padding-right: 24px;
+}
+
+.meal-actions {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.meal-item:hover .meal-actions {
+  opacity: 1;
+}
+
+.recipe-section {
+  background-color: var(--background-light);
+  border-radius: var(--border-radius);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.recipe-search {
+  display: flex;
+  gap: 8px;
+}
+
+.recipe-search input {
+  flex: 1;
+}
+
+.recipe-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  max-height: 400px;
+}
+
+.recipe-card {
+  background-color: var(--background-off);
+  border-radius: 4px;
+  padding: 12px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.recipe-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+
+.recipe-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.recipe-header h4 {
+  margin: 0;
+  font-weight: 500;
+}
+
+.recipe-time {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.recipe-description {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.recipe-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.recipe-category {
+  font-size: 12px;
+  padding: 2px 8px;
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 12px;
+}
+
+.recipe-actions {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.recipe-card:hover .recipe-actions {
+  opacity: 1;
+}
+
+.grocery-generator {
+  background-color: var(--background-light);
+  border-radius: var(--border-radius);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  margin-top: 24px;
+}
+
+.date-range-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 16px 0;
+}
+
+.meal-form, .recipe-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.meal-or-divider {
+  position: relative;
+  text-align: center;
+  margin: 16px 0;
+}
+
+.meal-or-divider:before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: var(--border-color);
+  z-index: 1;
+}
+
+.meal-or-divider span {
+  position: relative;
+  z-index: 2;
+  background-color: var(--background-light);
+  padding: 0 16px;
+  color: var(--text-secondary);
+}
+
+.meal-type-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  margin-right: 8px;
+}
+
+.meal-type-badge.breakfast {
+  background-color: #FFF8E1;
+  color: #FF6F00;
+}
+
+.meal-type-badge.lunch {
+  background-color: #E1F5FE;
+  color: #0288D1;
+}
+
+.meal-type-badge.dinner {
+  background-color: #E8F5E9;
+  color: #2E7D32;
+}
+
+.meal-type-badge.snack {
+  background-color: #F3E5F5;
+  color: #7B1FA2;
+}
+
+.meal-details, .recipe-details-modal {
+  padding: 8px 0;
+}
+
+.meal-header, .recipe-header {
+  margin-bottom: 16px;
+}
+
+.meal-header h3, .recipe-header h3 {
+  margin: 0 0 8px;
+  font-weight: 500;
+}
+
+.meal-meta, .recipe-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.meal-info, .recipe-ingredients, .recipe-instructions {
+  margin-bottom: 24px;
+}
+
+.recipe-ingredients h4, .recipe-instructions h4 {
+  margin-bottom: 8px;
+  font-weight: 500;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.recipe-ingredients ul {
+  list-style-type: disc;
+  padding-left: 20px;
+}
+
+.recipe-ingredients li {
+  margin-bottom: 4px;
+}
+
+.grocery-list-result {
+  padding: 8px 0;
+}
+
+.grocery-header {
+  margin-bottom: 16px;
+}
+
+.grocery-header h3 {
+  margin: 0 0 8px;
+}
+
+.grocery-items-list {
+  list-style-type: none;
+  padding: 0;
+}
+
+.grocery-items-list li {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.checkbox-container {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.grocery-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 24px;
+}
+
+@media (max-width: 900px) {
+  .meal-planner {
+    grid-template-columns: 1fr;
+  }
 }

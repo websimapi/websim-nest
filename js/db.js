@@ -365,25 +365,9 @@ async function deleteRecipe(recipeId) {
   return db.delete(stores.recipes, recipeId);
 }
 
-async function getRecipes() {
+async function getAllRecipes() {
   if (!db) throw new Error('Database not initialized');
   return db.getAll(stores.recipes);
-}
-
-async function getRecipesByCategory(category) {
-  if (!db) throw new Error('Database not initialized');
-  
-  const tx = db.transaction(stores.recipes, 'readonly');
-  const index = tx.store.index('category');
-  return index.getAll(category);
-}
-
-async function getRecipesCreatedBy(userId) {
-  if (!db) throw new Error('Database not initialized');
-  
-  const tx = db.transaction(stores.recipes, 'readonly');
-  const index = tx.store.index('createdBy');
-  return index.getAll(userId);
 }
 
 // Grocery-related database functions

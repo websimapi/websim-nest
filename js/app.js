@@ -479,15 +479,24 @@ function updateTodayMeals(meals) {
     return;
   }
   
+  // Sort meals by type in a specific order: breakfast, lunch, dinner, snack
+  const mealTypeOrder = { breakfast: 0, lunch: 1, dinner: 2, snack: 3 };
+  
+  const sortedMeals = [...meals].sort((a, b) => {
+    return mealTypeOrder[a.type] - mealTypeOrder[b.type];
+  });
+  
   let html = '';
-  meals.forEach(meal => {
+  sortedMeals.forEach(meal => {
+    let typeBadge = `<span class="meal-type-badge ${meal.type}">${capitalizeFirstLetter(meal.type)}</span>`;
+    
     html += `
       <div class="meal-item">
-        <div class="meal-type">${meal.type}</div>
+        <div class="meal-type">${typeBadge}</div>
         <div class="meal-name">${meal.name}</div>
         <div class="meal-info">
-          <span>${meal.time}</span>
-          <span class="meal-preparationTime">Prep: ${meal.preparationTime} min</span>
+          <span>${meal.time ? formatTime(meal.time) : ''}</span>
+          ${meal.preparationTime ? `<span class="meal-preparationTime">Prep: ${meal.preparationTime} min</span>` : ''}
         </div>
       </div>
     `;
@@ -549,6 +558,30 @@ function getMemberStatus(member) {
   }
   
   return 'Status unknown';
+}
+
+// Helper function to format time
+function formatTime(timeString) {
+  if (!timeString) return '';
+  
+  try {
+    const [hours, minutes] = timeString.split(':');
+    const hour = parseInt(hours, 10);
+    const minute = parseInt(minutes, 10);
+    
+    const period = hour >= 12 ? 'PM' : 'AM';
+    const formattedHour = hour % 12 || 12;
+    const formattedMinute = minute.toString().padStart(2, '0');
+    
+    return `${formattedHour}:${formattedMinute} ${period}`;
+  } catch (error) {
+    return timeString;
+  }
+}
+
+// Helper function to capitalize first letter
+function capitalizeFirstLetter(string) {
+  return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
 // Handle task status change

@@ -749,7 +749,8 @@ function renderListView(container) {
   // Get all events in the range
   const events = getEventsForDateRange(startDate, endDate, calendarCache.events);
   
-  if (events.length === 0) {
+  // Ensure events is an array
+  if (!Array.isArray(events) || events.length === 0) {
     const noEvents = document.createElement('div');
     noEvents.className = 'no-events-message';
     noEvents.innerHTML = `

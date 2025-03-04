@@ -160,7 +160,7 @@ function displayAccountOwner(user) {
   
   accountOwnerCard.innerHTML = `
     <div class="member-avatar" style="background-color: ${user.color || '#4285F4'}">
-      <img src="${user.imageUrl}" alt="${user.name}">
+      ${user.imageUrl ? `<img src="${user.imageUrl}" alt="${user.name}">` : user.name.charAt(0).toUpperCase()}
     </div>
     <div class="member-info">
       <h4>${user.name}</h4>
@@ -188,8 +188,15 @@ function displayFamilyMembers(familyMembers) {
       <div class="placeholder-message">
         <i class="material-icons">people_outline</i>
         <p>No family members added yet</p>
+        <button id="add-first-member-btn" class="btn btn-primary">
+          <i class="material-icons">person_add</i>
+          <span>Add Your First Family Member</span>
+        </button>
       </div>
     `;
+    
+    // Add event listener to the add first member button
+    document.getElementById('add-first-member-btn')?.addEventListener('click', showAddFamilyMemberModal);
     return;
   }
   
@@ -207,6 +214,29 @@ function displayFamilyMembers(familyMembers) {
       .join('')
       .substring(0, 2);
     
+    // Format birthdate if available
+    let birthdateDisplay = '';
+    if (member.birthdate) {
+      const birthdate = new Date(member.birthdate);
+      const options = { month: 'long', day: 'numeric' };
+      const formattedDate = birthdate.toLocaleDateString(undefined, options);
+      
+      // Calculate age
+      const today = new Date();
+      let age = today.getFullYear() - birthdate.getFullYear();
+      const m = today.getMonth() - birthdate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthdate.getDate())) {
+        age--;
+      }
+      
+      birthdateDisplay = `
+        <div class="member-birthdate">
+          <i class="material-icons">cake</i>
+          <span>${formattedDate} (${age} years old)</span>
+        </div>
+      `;
+    }
+    
     memberCard.innerHTML = `
       <div class="member-avatar" style="background-color: ${member.color || '#4285F4'}">
         ${initials}
@@ -214,15 +244,24 @@ function displayFamilyMembers(familyMembers) {
       <div class="member-info">
         <h4>${member.name}</h4>
         <div class="member-role">${capitalizeFirstLetter(member.role || 'Member')}</div>
+        ${birthdateDisplay}
+        <div class="member-access-level">
+          <i class="material-icons">${getAccessLevelIcon(member.accessLevel)}</i>
+          <span>${capitalizeFirstLetter(member.accessLevel || 'Limited')} Access</span>
+        </div>
         <div class="member-status">
           ${getMemberActivityStatus(member)}
         </div>
+        ${member.notes ? `<div class="member-notes">"${member.notes}"</div>` : ''}
       </div>
       <div class="member-actions">
-        <button class="btn btn-icon edit-member-btn" data-member-id="${member.id}">
+        <button class="btn btn-icon view-member-btn" data-member-id="${member.id}" title="View details">
+          <i class="material-icons">visibility</i>
+        </button>
+        <button class="btn btn-icon edit-member-btn" data-member-id="${member.id}" title="Edit member">
           <i class="material-icons">edit</i>
         </button>
-        <button class="btn btn-icon delete-member-btn" data-member-id="${member.id}">
+        <button class="btn btn-icon delete-member-btn" data-member-id="${member.id}" title="Delete member">
           <i class="material-icons">delete</i>
         </button>
       </div>
@@ -232,12 +271,187 @@ function displayFamilyMembers(familyMembers) {
   });
   
   // Add event listeners
+  familyGrid.querySelectorAll('.view-member-btn').forEach(button => {
+    button.addEventListener('click', handleViewFamilyMemberClick);
+  });
+  
   familyGrid.querySelectorAll('.edit-member-btn').forEach(button => {
     button.addEventListener('click', handleEditFamilyMemberClick);
   });
   
   familyGrid.querySelectorAll('.delete-member-btn').forEach(button => {
     button.addEventListener('click', handleDeleteFamilyMemberClick);
+  });
+}
+
+// Get icon for access level
+function getAccessLevelIcon(accessLevel) {
+  switch (accessLevel) {
+    case 'full': return 'security';
+    case 'limited': return 'partial_security';
+    case 'restricted': return 'shield';
+    default: return 'shield';
+  }
+}
+
+// Handle viewing a family member
+function handleViewFamilyMemberClick(event) {
+  const memberId = event.currentTarget.dataset.memberId;
+  
+  // Get family member from database
+  getFamilyMemberById(memberId).then(member => {
+    if (!member) {
+      showNotification('Family member not found', 'error');
+      return;
+    }
+    
+    showMemberDetailsModal(member);
+  }).catch(error => {
+    console.error('Error loading family member details:', error);
+    showNotification('Failed to load family member details', 'error');
+  });
+}
+
+// Show member details modal
+function showMemberDetailsModal(member) {
+  // Format birthdate if available
+  let birthdateSection = '';
+  if (member.birthdate) {
+    const birthdate = new Date(member.birthdate);
+    const formattedDate = birthdate.toLocaleDateString(undefined, { 
+      weekday: 'long',
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+    
+    // Calculate age
+    const today = new Date();
+    let age = today.getFullYear() - birthdate.getFullYear();
+    const m = today.getMonth() - birthdate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthdate.getDate())) {
+      age--;
+    }
+    
+    birthdateSection = `
+      <div class="info-item">
+        <i class="material-icons">cake</i>
+        <span>Born: ${formattedDate} (${age} years old)</span>
+      </div>
+    `;
+  }
+  
+  // Format created date
+  let createdSection = '';
+  if (member.createdAt) {
+    const createdDate = new Date(member.createdAt);
+    const formattedDate = createdDate.toLocaleDateString(undefined, { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+    
+    createdSection = `
+      <div class="info-item">
+        <i class="material-icons">event_available</i>
+        <span>Added to family: ${formattedDate}</span>
+      </div>
+    `;
+  }
+  
+  // Format PIN display
+  let pinDisplay = member.pin ? '•'.repeat(member.pin.length) : 'Not set';
+  
+  // Create initials for avatar
+  const initials = member.name.split(' ')
+    .map(part => part.charAt(0).toUpperCase())
+    .join('')
+    .substring(0, 2);
+  
+  // Build HTML content
+  const content = `
+    <div class="member-details">
+      <div class="member-header" style="background-color: ${member.color || '#4285F4'}10; border-left: 4px solid ${member.color || '#4285F4'}">
+        <div class="large-avatar" style="background-color: ${member.color || '#4285F4'}">
+          ${initials}
+        </div>
+        <h3>${member.name}</h3>
+        <div class="member-role">${capitalizeFirstLetter(member.role || 'Member')}</div>
+      </div>
+      
+      <div class="member-info-details">
+        ${birthdateSection}
+        
+        <div class="info-item">
+          <i class="material-icons">${getAccessLevelIcon(member.accessLevel)}</i>
+          <span>Access Level: ${capitalizeFirstLetter(member.accessLevel || 'Limited')}</span>
+        </div>
+        
+        <div class="info-item">
+          <i class="material-icons">pin</i>
+          <span>PIN Code: ${pinDisplay}</span>
+        </div>
+        
+        <div class="info-item">
+          <i class="material-icons">schedule</i>
+          <span>Activity Status: ${getMemberActivityStatus(member)}</span>
+        </div>
+        
+        ${createdSection}
+        
+        ${member.notes ? `
+          <div class="info-item notes">
+            <i class="material-icons">note</i>
+            <div>
+              <div class="label">Notes:</div>
+              <p>${member.notes}</p>
+            </div>
+          </div>
+        ` : ''}
+      </div>
+      
+      <div class="activity-section">
+        <h4>Recent Activity</h4>
+        <div class="activity-list">
+          <div class="activity-item">
+            <i class="material-icons">info</i>
+            <span>Activity tracking is coming soon</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="member-actions">
+        <button id="edit-member" class="btn btn-outline">
+          <i class="material-icons">edit</i>
+          <span>Edit</span>
+        </button>
+        <button id="delete-member" class="btn btn-outline danger">
+          <i class="material-icons">delete</i>
+          <span>Delete</span>
+        </button>
+      </div>
+    </div>
+  `;
+  
+  showModal(`Family Member: ${member.name}`, content);
+  
+  // Add event listeners to buttons
+  document.getElementById('edit-member').addEventListener('click', () => {
+    closeModal();
+    showEditFamilyMemberModal(member);
+  });
+  
+  document.getElementById('delete-member').addEventListener('click', () => {
+    closeModal();
+    const confirmContent = `
+      <div class="confirmation-dialog">
+        <p>Are you sure you want to delete ${member.name} from your family?</p>
+        <p>This will also remove their assigned tasks and events.</p>
+        <p>This action cannot be undone.</p>
+      </div>
+    `;
+    
+    showModal('Delete Family Member', confirmContent, () => confirmDeleteFamilyMember(member.id));
   });
 }
 
@@ -257,13 +471,16 @@ function showAddFamilyMemberModal() {
             <option value="adult">Adult</option>
             <option value="child">Child</option>
             <option value="teen">Teen</option>
+            <option value="parent">Parent</option>
+            <option value="grandparent">Grandparent</option>
+            <option value="pet">Pet</option>
             <option value="other">Other</option>
           </select>
         </div>
         
         <div class="form-group">
           <label for="member-color">Color</label>
-          <input type="color" id="member-color" value="#EA4335">
+          <input type="color" id="member-color" value="${getRandomMemberColor()}">
         </div>
       </div>
       
@@ -277,25 +494,41 @@ function showAddFamilyMemberModal() {
           <label for="member-access-level">Access Level</label>
           <select id="member-access-level">
             <option value="full">Full Access</option>
-            <option value="limited">Limited Access</option>
+            <option value="limited" selected>Limited Access</option>
             <option value="restricted">Restricted Access</option>
           </select>
+          <div class="help-text">
+            <span><i class="material-icons small">info</i> Determines what this person can view and edit in the app</span>
+          </div>
         </div>
         
         <div class="form-group">
           <label for="member-pin">PIN Code (for login)</label>
           <input type="text" id="member-pin" placeholder="Optional 4-digit PIN" pattern="[0-9]{4}" maxlength="4">
+          <div class="help-text">
+            <span><i class="material-icons small">info</i> For family members to quickly access their account</span>
+          </div>
         </div>
       </div>
       
       <div class="form-group">
         <label for="member-notes">Notes</label>
-        <textarea id="member-notes" rows="2" placeholder="Optional notes about this family member"></textarea>
+        <textarea id="member-notes" rows="3" placeholder="Optional notes about this family member"></textarea>
       </div>
     </form>
   `;
   
   showModal('Add Family Member', content, handleAddFamilyMember);
+}
+
+// Generate a random color for new family members
+function getRandomMemberColor() {
+  const colors = [
+    '#4285F4', '#EA4335', '#FBBC05', '#34A853', 
+    '#8E24AA', '#F06292', '#FF7043', '#039BE5', 
+    '#0097A7', '#43A047', '#689F38', '#FDD835'
+  ];
+  return colors[Math.floor(Math.random() * colors.length)];
 }
 
 // Handle adding a family member
@@ -380,13 +613,16 @@ function showEditFamilyMemberModal(member) {
             <option value="adult" ${member.role === 'adult' ? 'selected' : ''}>Adult</option>
             <option value="child" ${member.role === 'child' ? 'selected' : ''}>Child</option>
             <option value="teen" ${member.role === 'teen' ? 'selected' : ''}>Teen</option>
+            <option value="parent" ${member.role === 'parent' ? 'selected' : ''}>Parent</option>
+            <option value="grandparent" ${member.role === 'grandparent' ? 'selected' : ''}>Grandparent</option>
+            <option value="pet" ${member.role === 'pet' ? 'selected' : ''}>Pet</option>
             <option value="other" ${member.role === 'other' ? 'selected' : ''}>Other</option>
           </select>
         </div>
         
         <div class="form-group">
           <label for="member-color">Color</label>
-          <input type="color" id="member-color" value="${member.color || '#EA4335'}">
+          <input type="color" id="member-color" value="${member.color || '#4285F4'}">
         </div>
       </div>
       
@@ -403,17 +639,23 @@ function showEditFamilyMemberModal(member) {
             <option value="limited" ${member.accessLevel === 'limited' ? 'selected' : ''}>Limited Access</option>
             <option value="restricted" ${member.accessLevel === 'restricted' ? 'selected' : ''}>Restricted Access</option>
           </select>
+          <div class="help-text">
+            <span><i class="material-icons small">info</i> Determines what this person can view and edit in the app</span>
+          </div>
         </div>
         
         <div class="form-group">
           <label for="member-pin">PIN Code (for login)</label>
           <input type="text" id="member-pin" placeholder="Optional 4-digit PIN" pattern="[0-9]{4}" maxlength="4" value="${member.pin || ''}">
+          <div class="help-text">
+            <span><i class="material-icons small">info</i> For family members to quickly access their account</span>
+          </div>
         </div>
       </div>
       
       <div class="form-group">
         <label for="member-notes">Notes</label>
-        <textarea id="member-notes" rows="2" placeholder="Optional notes about this family member">${member.notes || ''}</textarea>
+        <textarea id="member-notes" rows="3" placeholder="Optional notes about this family member">${member.notes || ''}</textarea>
       </div>
     </form>
   `;
@@ -554,7 +796,7 @@ async function saveSettingValue(settingId, value) {
 // Get member activity status text
 function getMemberActivityStatus(member) {
   if (!member.lastActivity) {
-    return 'Never logged in';
+    return '<span class="status-indicator offline"></span> Never logged in';
   }
   
   const lastActivity = new Date(member.lastActivity);
@@ -565,11 +807,13 @@ function getMemberActivityStatus(member) {
   const diffDays = Math.floor(diffHours / 24);
   
   if (diffMins < 60) {
-    return diffMins <= 5 ? 'Online now' : `Active ${diffMins} mins ago`;
+    return diffMins <= 5 
+      ? '<span class="status-indicator online"></span> Online now' 
+      : `<span class="status-indicator away"></span> Active ${diffMins} mins ago`;
   } else if (diffHours < 24) {
-    return `Active ${diffHours} ${diffHours === 1 ? 'hour' : 'hours'} ago`;
+    return `<span class="status-indicator offline"></span> Active ${diffHours} ${diffHours === 1 ? 'hour' : 'hours'} ago`;
   } else {
-    return `Last seen ${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`;
+    return `<span class="status-indicator offline"></span> Last seen ${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`;
   }
 }
 

@@ -403,10 +403,31 @@ function updateTaskListView(tasks) {
     
     const status = task.completed ? 'completed' : task.status;
     
+    // Determine what status button to show based on current status
+    let statusButton = '';
+    if (task.completed) {
+      statusButton = `
+        <button class="btn btn-icon" disabled>
+          <i class="material-icons">done_all</i>
+        </button>
+      `;
+    } else if (task.status === 'in-progress') {
+      statusButton = `
+        <button class="btn btn-icon complete-button" data-task-id="${task.id}">
+          <i class="material-icons">done</i>
+        </button>
+      `;
+    } else {
+      statusButton = `
+        <button class="btn btn-icon progress-button" data-task-id="${task.id}">
+          <i class="material-icons">play_arrow</i>
+        </button>
+      `;
+    }
+    
     tr.innerHTML = `
       <td>
-        <input type="checkbox" class="task-checkbox" data-task-id="${task.id}" 
-          ${task.completed ? 'checked' : ''}>
+        ${statusButton}
       </td>
       <td>
         <div class="task-title ${task.completed ? 'completed' : ''} ${isOverdue ? 'overdue' : ''}">
@@ -437,8 +458,16 @@ function updateTaskListView(tasks) {
   });
   
   // Add event listeners
-  tbody.querySelectorAll('.task-checkbox').forEach(checkbox => {
-    checkbox.addEventListener('change', handleTaskCheckboxChange);
+  tbody.querySelectorAll('.progress-button').forEach(button => {
+    button.addEventListener('click', (e) => {
+      updateTaskStatus(e.currentTarget.dataset.taskId, 'in-progress');
+    });
+  });
+  
+  tbody.querySelectorAll('.complete-button').forEach(button => {
+    button.addEventListener('click', (e) => {
+      updateTaskStatus(e.currentTarget.dataset.taskId, 'completed');
+    });
   });
   
   tbody.querySelectorAll('.edit-task-btn').forEach(button => {
@@ -491,13 +520,33 @@ function createTaskCardElement(task) {
   // Priority indicator
   const priorityClass = `priority-${task.priority || 'medium'}`;
   
+  // Determine what status button to show based on current status
+  let statusButton = '';
+  if (task.completed) {
+    statusButton = `
+      <button class="btn btn-icon status-button" disabled>
+        <i class="material-icons">done_all</i>
+      </button>
+    `;
+  } else if (task.status === 'in-progress') {
+    statusButton = `
+      <button class="btn btn-icon status-button complete-button" data-task-id="${task.id}">
+        <i class="material-icons">done</i>
+      </button>
+    `;
+  } else {
+    statusButton = `
+      <button class="btn btn-icon status-button progress-button" data-task-id="${task.id}">
+        <i class="material-icons">play_arrow</i>
+      </button>
+    `;
+  }
+  
   // Build card HTML
   card.innerHTML = `
     <div class="card-header ${priorityClass}">
-      <div class="task-checkbox-container">
-        <input type="checkbox" class="task-checkbox" id="card-${task.id}" 
-          ${task.completed ? 'checked' : ''}>
-        <label for="card-${task.id}"></label>
+      <div class="task-status-container">
+        ${statusButton}
       </div>
       <div class="task-title ${task.completed ? 'completed' : ''} ${isOverdue ? 'overdue' : ''}">
         ${task.title}
@@ -529,15 +578,31 @@ function createTaskCardElement(task) {
     </div>
   `;
   
-  // Add event listeners
-  card.querySelector('.task-checkbox').addEventListener('change', handleTaskCheckboxChange);
+  // Add event listeners for status buttons
+  const progressButton = card.querySelector('.progress-button');
+  if (progressButton) {
+    progressButton.addEventListener('click', (e) => {
+      e.stopPropagation();
+      updateTaskStatus(e.currentTarget.dataset.taskId, 'in-progress');
+    });
+  }
+  
+  const completeButton = card.querySelector('.complete-button');
+  if (completeButton) {
+    completeButton.addEventListener('click', (e) => {
+      e.stopPropagation();
+      updateTaskStatus(e.currentTarget.dataset.taskId, 'completed');
+    });
+  }
+  
+  // Add event listeners for action buttons
   card.querySelector('.edit-task-btn').addEventListener('click', handleEditTaskClick);
   card.querySelector('.delete-task-btn').addEventListener('click', handleDeleteTaskClick);
   
   // Make the card clickable to see details
   card.addEventListener('click', (e) => {
-    // Ignore clicks on action buttons and checkbox
-    if (!e.target.closest('.task-actions') && !e.target.closest('.task-checkbox-container')) {
+    // Ignore clicks on action buttons and status buttons
+    if (!e.target.closest('.task-actions') && !e.target.closest('.task-status-container')) {
       showTaskDetailsModal(task);
     }
   });
@@ -1225,13 +1290,43 @@ function showTaskDetailsModal(task) {
     low: '<span class="priority low">Low Priority</span>'
   };
   
+  // Determine what status button to show based on current status
+  let statusButton = '';
+  if (task.completed) {
+    statusButton = `
+      <div class="info-item">
+        <i class="material-icons">done_all</i>
+        <span>This task is completed</span>
+      </div>
+    `;
+  } else if (task.status === 'in-progress') {
+    statusButton = `
+      <div class="info-item">
+        <button id="complete-task" class="btn btn-outline">
+          <i class="material-icons">done</i>
+          <span>Mark as Complete</span>
+        </button>
+      </div>
+    `;
+  } else {
+    statusButton = `
+      <div class="info-item">
+        <button id="progress-task" class="btn btn-outline">
+          <i class="material-icons">play_arrow</i>
+          <span>Mark as In Progress</span>
+        </button>
+      </div>
+    `;
+  }
+  
   // Build content
   const content = `
     <div class="task-details">
       <div class="task-header priority-${task.priority}">
-        <div class="task-checkbox-container">
-          <input type="checkbox" id="detail-${task.id}" ${task.completed ? 'checked' : ''}>
-          <label for="detail-${task.id}"></label>
+        <div class="task-status-container">
+          ${task.completed ? '<i class="material-icons">done_all</i>' : 
+             task.status === 'in-progress' ? '<i class="material-icons">hourglass_half</i>' : 
+             '<i class="material-icons">schedule</i>'}
         </div>
         <h3 class="${task.completed ? 'completed' : ''}">${task.title}</h3>
         ${priorityBadges[task.priority] || priorityBadges.medium}
@@ -1255,6 +1350,7 @@ function showTaskDetailsModal(task) {
         
         ${completedInfo}
         ${recurrenceInfo}
+        ${statusButton}
         
         ${task.description ? `
           <div class="task-description">
@@ -1279,41 +1375,22 @@ function showTaskDetailsModal(task) {
   
   showModal('Task Details', content);
   
-  // Add event listeners
-  document.getElementById('detail-' + task.id).addEventListener('change', async function(e) {
-    closeModal();
-    
-    const isChecked = e.target.checked;
-    
-    try {
-      // Update task
-      task.completed = isChecked;
-      task.completedDate = isChecked ? new Date().toISOString() : null;
-      task.updatedAt = new Date().toISOString();
-      
-      // Save to database
-      await updateTask(task);
-      
-      // Show notification
-      if (isChecked) {
-        showNotification('Task marked as completed', 'success');
-      } else {
-        showNotification('Task marked as incomplete', 'info');
-      }
-      
-      // Refresh tasks view
-      await refreshTasks();
-      
-      // Also update dashboard if it's active
-      if (appState.currentView === 'dashboard') {
-        updateDashboard();
-      }
-    } catch (error) {
-      console.error('Error updating task completion:', error);
-      showNotification('Failed to update task', 'error');
+  // Add event listeners for status buttons
+  if (!task.completed) {
+    if (task.status === 'in-progress') {
+      document.getElementById('complete-task')?.addEventListener('click', () => {
+        closeModal();
+        updateTaskStatus(task.id, 'completed');
+      });
+    } else {
+      document.getElementById('progress-task')?.addEventListener('click', () => {
+        closeModal();
+        updateTaskStatus(task.id, 'in-progress');
+      });
     }
-  });
+  }
   
+  // Add event listeners for other buttons
   document.getElementById('edit-task').addEventListener('click', () => {
     closeModal();
     showEditTaskModal(task);

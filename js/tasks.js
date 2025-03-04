@@ -1093,19 +1093,27 @@ async function handleTaskCheckboxChange(event) {
     }
     
     // Update task
-    task.completed = isChecked;
-    task.completedDate = isChecked ? new Date().toISOString() : null;
+    // Instead of marking completed right away, update status to 'in-progress' if coming from 'todo'
+    if (isChecked && task.status === 'todo') {
+      task.status = 'in-progress';
+      task.completed = false; // Ensure it's not marked as completed
+      showNotification('Task moved to In Progress', 'info');
+    } else if (isChecked && task.status === 'in-progress') {
+      // If already in progress and being checked, mark as completed
+      task.completed = true;
+      task.completedDate = new Date().toISOString();
+      showNotification('Task marked as completed', 'success');
+    } else {
+      // If unchecked, always mark as incomplete
+      task.completed = false;
+      task.completedDate = null;
+      showNotification('Task marked as incomplete', 'info');
+    }
+    
     task.updatedAt = new Date().toISOString();
     
     // Save to database
     await updateTask(task);
-    
-    // Show notification
-    if (isChecked) {
-      showNotification('Task marked as completed', 'success');
-    } else {
-      showNotification('Task marked as incomplete', 'info');
-    }
     
     // Refresh tasks view
     await refreshTasks();

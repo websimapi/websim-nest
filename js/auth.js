@@ -12,6 +12,9 @@ function initLocalAuth() {
   
   // Set up auth-related DOM event listeners
   document.getElementById('login-button').addEventListener('click', showUserSwitcherModal);
+  
+  // Update login button text based on auth state
+  updateLoginButtonText();
 }
 
 // Check if user is already logged in via local storage
@@ -55,6 +58,9 @@ async function updateSignInStatus(isSignedIn, user = null) {
     appState.currentUser = user;
     appState.isAuthenticated = true;
     
+    // Update login button text
+    updateLoginButtonText();
+    
     // Store/update user in the database
     try {
       // Check if user already exists
@@ -94,6 +100,9 @@ async function updateSignInStatus(isSignedIn, user = null) {
     appState.isAuthenticated = false;
     appState.family = [];
     
+    // Update login button text
+    updateLoginButtonText();
+    
     // Update UI for logged-out state
     updateUIForLoggedOut();
     
@@ -103,6 +112,12 @@ async function updateSignInStatus(isSignedIn, user = null) {
 
 // Show user switcher modal
 function showUserSwitcherModal() {
+  // Check if user is logged in
+  if (!appState.isAuthenticated) {
+    showLoginModal();
+    return;
+  }
+  
   // Get current user and family members
   const currentUser = appState.currentUser;
   const family = appState.family || [];
@@ -174,6 +189,168 @@ function showUserSwitcherModal() {
       closeModal();
     });
   });
+}
+
+// Show login modal
+function showLoginModal() {
+  const content = `
+    <div class="login-container">
+      <div class="tab-controls">
+        <button id="login-tab-btn" class="tab-btn active">Login</button>
+        <button id="register-tab-btn" class="tab-btn">Register</button>
+      </div>
+      
+      <div id="login-tab" class="tab-pane active">
+        <form id="login-form">
+          <div class="form-group">
+            <label for="login-email">Email</label>
+            <input type="email" id="login-email" required>
+          </div>
+          <div class="form-group">
+            <label for="login-password">Password</label>
+            <input type="password" id="login-password" required>
+          </div>
+          <button type="submit" class="btn btn-primary login-submit">Login</button>
+        </form>
+      </div>
+      
+      <div id="register-tab" class="tab-pane">
+        <form id="register-form">
+          <div class="form-group">
+            <label for="register-name">Full Name</label>
+            <input type="text" id="register-name" required>
+          </div>
+          <div class="form-group">
+            <label for="register-email">Email</label>
+            <input type="email" id="register-email" required>
+          </div>
+          <div class="form-group">
+            <label for="register-password">Password</label>
+            <input type="password" id="register-password" required>
+          </div>
+          <div class="form-group">
+            <label for="register-color">Profile Color</label>
+            <input type="color" id="register-color" value="#4285F4">
+          </div>
+          <button type="submit" class="btn btn-primary register-submit">Register</button>
+        </form>
+      </div>
+    </div>
+  `;
+  
+  showModal('Account Access', content);
+  
+  // Set up tab switching
+  document.getElementById('login-tab-btn').addEventListener('click', () => {
+    document.getElementById('login-tab').classList.add('active');
+    document.getElementById('register-tab').classList.remove('active');
+    document.getElementById('login-tab-btn').classList.add('active');
+    document.getElementById('register-tab-btn').classList.remove('active');
+  });
+  
+  document.getElementById('register-tab-btn').addEventListener('click', () => {
+    document.getElementById('login-tab').classList.remove('active');
+    document.getElementById('register-tab').classList.add('active');
+    document.getElementById('login-tab-btn').classList.remove('active');
+    document.getElementById('register-tab-btn').classList.add('active');
+  });
+  
+  // Handle form submissions
+  document.getElementById('login-form').addEventListener('submit', handleLogin);
+  document.getElementById('register-form').addEventListener('submit', handleRegistration);
+}
+
+// Handle login form submission
+function handleLogin(event) {
+  event.preventDefault();
+  
+  const email = document.getElementById('login-email').value;
+  const password = document.getElementById('login-password').value;
+  
+  // Simulate login (in a real app, we'd verify credentials with a server)
+  // For demo purposes, we'll create a user if the email doesn't exist
+  simulateLogin(email, password);
+}
+
+// Handle registration form submission
+function handleRegistration(event) {
+  event.preventDefault();
+  
+  const name = document.getElementById('register-name').value;
+  const email = document.getElementById('register-email').value;
+  const password = document.getElementById('register-password').value;
+  const color = document.getElementById('register-color').value;
+  
+  // Create a new user
+  const newUser = {
+    id: 'user_' + Date.now(),
+    name: name,
+    email: email,
+    color: color,
+    // In a real app, we would properly hash the password
+    // and store it securely, but for this demo we won't store it
+    createdAt: new Date().toISOString(),
+    notifications: 'all',
+    role: 'owner'
+  };
+  
+  // Store user in localStorage
+  localStorage.setItem('currentUser', JSON.stringify(newUser));
+  
+  // Update app state
+  updateSignInStatus(true, newUser);
+  
+  // Close the modal
+  closeModal();
+}
+
+// Simulate login by checking existing users
+async function simulateLogin(email, password) {
+  try {
+    // Get all users from the database
+    const allUsers = await db.getAll(stores.users);
+    
+    // Find user with matching email
+    const user = allUsers.find(u => u.email === email);
+    
+    if (user) {
+      // In a real app, we would verify the password here
+      // For demo purposes, we'll just log the user in
+      localStorage.setItem('currentUser', JSON.stringify(user));
+      updateSignInStatus(true, user);
+    } else {
+      // Create a new user if not found (just for demo)
+      const newUser = {
+        id: 'user_' + Date.now(),
+        name: email.split('@')[0], // Use part of email as name
+        email: email,
+        color: '#4285F4',
+        createdAt: new Date().toISOString(),
+        notifications: 'all',
+        role: 'owner'
+      };
+      
+      localStorage.setItem('currentUser', JSON.stringify(newUser));
+      updateSignInStatus(true, newUser);
+    }
+    
+    // Close the modal
+    closeModal();
+    
+  } catch (error) {
+    console.error('Login error:', error);
+    showNotification('Login failed. Please try again.', 'error');
+  }
+}
+
+// Update login button text based on auth state
+function updateLoginButtonText() {
+  const loginButton = document.getElementById('login-button');
+  if (appState.isAuthenticated) {
+    loginButton.textContent = 'Switch User';
+  } else {
+    loginButton.textContent = 'Login';
+  }
 }
 
 // Handle logout

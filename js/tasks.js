@@ -1483,88 +1483,6 @@ async function updateTaskStatus(taskId, newStatus) {
   }
 }
 
-// Handle adding a new chore
-async function handleAddChore() {
-  const form = document.getElementById('add-chore-form');
-  
-  // Basic validation
-  if (!form.checkValidity()) {
-    showNotification('Please fill out all required fields', 'error');
-    return;
-  }
-  
-  try {
-    const title = document.getElementById('chore-title').value;
-    const description = document.getElementById('chore-description').value;
-    const date = document.getElementById('chore-date').value;
-    const priority = document.getElementById('chore-priority').value;
-    const assigneeId = document.getElementById('chore-assignee').value;
-    const recurrence = document.getElementById('chore-recurrence').value;
-    
-    // Build recurrence rule if applicable
-    let recurrenceRule = null;
-    
-    if (recurrence !== 'none') {
-      if (recurrence === 'custom') {
-        const interval = document.getElementById('recurrence-interval').value;
-        const period = document.getElementById('recurrence-period').value;
-        const ends = document.getElementById('recurrence-ends').value;
-        
-        recurrenceRule = {
-          frequency: period,
-          interval: parseInt(interval),
-          ends: ends
-        };
-        
-        if (ends === 'after') {
-          recurrenceRule.count = parseInt(document.getElementById('recurrence-count').value);
-        } else if (ends === 'on-date') {
-          recurrenceRule.until = document.getElementById('recurrence-until').value;
-        }
-      } else {
-        recurrenceRule = {
-          frequency: recurrence,
-          interval: 1,
-          ends: 'never'
-        };
-      }
-    }
-    
-    // Create task object
-    const task = {
-      id: 'task_' + Date.now(),
-      title: title,
-      description: description,
-      assigneeId: assigneeId,
-      priority: priority,
-      dueDate: new Date(date + 'T12:00:00').toISOString(),
-      status: 'todo',
-      completed: false,
-      completedDate: null,
-      category: 'chore',
-      recurrence: recurrenceRule,
-      createdBy: appState.currentUser.id,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    
-    // Save to database
-    await addTask(task);
-    
-    // Do NOT create recurring tasks immediately - only store the rule for future recurrences
-    // This fixes the issue of duplicate tasks showing in the chart
-    
-    showNotification('Chore added successfully', 'success');
-    
-    // Refresh chore chart
-    loadChoreChart();
-    
-  } catch (error) {
-    console.error('Error adding chore:', error);
-    showNotification('Failed to add chore', 'error');
-  }
-}
-
 // Load the chore chart
 async function loadChoreChart() {
   // Get the chore chart container
@@ -1597,31 +1515,13 @@ async function loadChoreChart() {
   // Filter for chores
   const chores = allTasks.filter(task => task.category === 'chore');
   
-  // Group chores by assignee and day (to prevent duplicates)
+  // Group chores by assignee
   const choresByAssignee = {};
   
   familyMembers.forEach(member => {
-    choresByAssignee[member.id] = {};
-    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-    days.forEach(day => {
-      choresByAssignee[member.id][day] = [];
-    });
+    choresByAssignee[member.id] = chores.filter(chore => chore.assigneeId === member.id);
   });
   
-  // Group all chores by day and assignee
-  chores.forEach(chore => {
-    const dueDate = new Date(chore.dueDate);
-    const day = dueDate.toLocaleDateString('en-US', { weekday: 'long' });
-    
-    // Only add if we have an assignee and the array doesn't already have a task with this title
-    if (chore.assigneeId && choresByAssignee[chore.assigneeId] && choresByAssignee[chore.assigneeId][day]) {
-      const existingChore = choresByAssignee[chore.assigneeId][day].find(c => c.title === chore.title);
-      if (!existingChore) {
-        choresByAssignee[chore.assigneeId][day].push(chore);
-      }
-    }
-  });
-
   // Create chore chart
   let html = `
     <div class="chore-chart-header">
@@ -1652,14 +1552,17 @@ async function loadChoreChart() {
           ${isToday ? '<div class="today-badge">Today</div>' : ''}
         </div>
         ${familyMembers.map(member => {
-          const dayChores = choresByAssignee[member.id][day] || [];
+          const dayChores = choresByAssignee[member.id].filter(chore => {
+            const dueDate = new Date(chore.dueDate);
+            return dueDate.toLocaleDateString('en-US', { weekday: 'long' }) === day;
+          });
           
           return `
             <div class="chore-chart-cell chore-cell ${isToday ? 'today-cell' : ''}">
               ${dayChores.length > 0 ? `
                 <div class="chore-list">
                   ${dayChores.map(chore => `
-                    <div class="chore-item ${chore.completed ? 'completed' : ''}" title="${chore.title}" data-task-id="${chore.id}">
+                    <div class="chore-item ${chore.completed ? 'completed' : ''}" title="${chore.title}">
                       <div class="chore-checkbox">
                         <input type="checkbox" id="chore-${chore.id}" ${chore.completed ? 'checked' : ''} data-task-id="${chore.id}" class="task-checkbox">
                         <label for="chore-${chore.id}"></label>
@@ -1687,20 +1590,6 @@ async function loadChoreChart() {
   // Add event listeners to checkboxes
   choreChart.querySelectorAll('.task-checkbox').forEach(checkbox => {
     checkbox.addEventListener('change', handleTaskCheckboxChange);
-  });
-  
-  // Add event listeners to chore items (clicking moves to in-progress)
-  choreChart.querySelectorAll('.chore-item').forEach(item => {
-    item.addEventListener('click', (e) => {
-      // Don't trigger if clicking on the checkbox
-      if (!e.target.closest('.chore-checkbox')) {
-        const taskId = item.dataset.taskId;
-        if (taskId) {
-          // Move to in-progress status
-          updateTaskStatus(taskId, 'in-progress');
-        }
-      }
-    });
   });
   
   // Add event listeners to add chore buttons
@@ -1768,91 +1657,59 @@ function showAddChoreModal(day, assigneeId) {
           </select>
         </div>
       </div>
-      <div class="form-group">
-        <label for="chore-recurrence">Repeat</label>
-        <select id="chore-recurrence">
-          <option value="none">Does not repeat</option>
-          <option value="daily">Daily</option>
-          <option value="weekly" selected>Weekly</option>
-          <option value="monthly">Monthly</option>
-          <option value="custom">Custom...</option>
-        </select>
-      </div>
-      <div id="recurrence-details" class="hidden">
-        <!-- Will be shown if custom recurrence is selected -->
-      </div>
       <input type="hidden" id="chore-assignee" value="${assigneeId}">
     </form>
   `;
   
   showModal('Add Chore', content, handleAddChore);
+}
+
+// Handle adding a new chore
+async function handleAddChore() {
+  const form = document.getElementById('add-chore-form');
   
-  // Handle recurrence selection
-  document.getElementById('chore-recurrence').addEventListener('change', function() {
-    const recurrenceDetails = document.getElementById('recurrence-details');
+  // Basic validation
+  if (!form.checkValidity()) {
+    showNotification('Please fill out all required fields', 'error');
+    return;
+  }
+  
+  try {
+    const title = document.getElementById('chore-title').value;
+    const description = document.getElementById('chore-description').value;
+    const date = document.getElementById('chore-date').value;
+    const priority = document.getElementById('chore-priority').value;
+    const assigneeId = document.getElementById('chore-assignee').value;
     
-    if (this.value === 'custom') {
-      recurrenceDetails.classList.remove('hidden');
-      recurrenceDetails.innerHTML = `
-        <div class="form-row">
-          <div class="form-group">
-            <label for="recurrence-interval">Repeat every</label>
-            <div class="input-with-select">
-              <input type="number" id="recurrence-interval" min="1" value="1">
-              <select id="recurrence-period">
-                <option value="day">day(s)</option>
-                <option value="week">week(s)</option>
-                <option value="month">month(s)</option>
-                <option value="year">year(s)</option>
-              </select>
-            </div>
-          </div>
-          
-          <div class="form-group">
-            <label for="recurrence-ends">Ends</label>
-            <select id="recurrence-ends">
-              <option value="never">Never</option>
-              <option value="after">After</option>
-              <option value="on-date">On date</option>
-            </select>
-          </div>
-        </div>
-        
-        <div id="recurrence-ends-details"></div>
-      `;
-      
-      // Add listener for ends selection
-      document.getElementById('recurrence-ends').addEventListener('change', function() {
-        const endsDetails = document.getElementById('recurrence-ends-details');
-        
-        if (this.value === 'after') {
-          endsDetails.innerHTML = `
-            <div class="form-group">
-              <label for="recurrence-count">Occurrences</label>
-              <input type="number" id="recurrence-count" min="1" value="10">
-            </div>
-          `;
-        } else if (this.value === 'on-date') {
-          const threeMonthsLater = new Date();
-          threeMonthsLater.setMonth(threeMonthsLater.getMonth() + 3);
-          
-          endsDetails.innerHTML = `
-            <div class="form-group">
-              <label for="recurrence-until">End date</label>
-              <input type="date" id="recurrence-until" value="${threeMonthsLater.toISOString().split('T')[0]}">
-            </div>
-          `;
-        } else {
-          endsDetails.innerHTML = '';
-        }
-      });
-      
-      // Trigger initial ends display
-      document.getElementById('recurrence-ends').dispatchEvent(new Event('change'));
-    } else {
-      recurrenceDetails.classList.add('hidden');
-    }
-  });
+    // Create task object
+    const task = {
+      id: 'task_' + Date.now(),
+      title: title,
+      description: description,
+      assigneeId: assigneeId,
+      priority: priority,
+      dueDate: new Date(date + 'T12:00:00').toISOString(),
+      status: 'todo',
+      completed: false,
+      completedDate: null,
+      category: 'chore',
+      createdBy: appState.currentUser.id,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    // Save to database
+    await addTask(task);
+    
+    showNotification('Chore added successfully', 'success');
+    
+    // Refresh chore chart
+    loadChoreChart();
+    
+  } catch (error) {
+    console.error('Error adding chore:', error);
+    showNotification('Failed to add chore', 'error');
+  }
 }
 
 // Get all tasks from the database

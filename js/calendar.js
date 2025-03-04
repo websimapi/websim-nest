@@ -292,7 +292,7 @@ function renderMonthView(container) {
     const dayEnd = new Date(date);
     dayEnd.setHours(23, 59, 59, 999);
     
-    const dayEvents = getEventsForDateRange(dayStart, dayEnd, calendarCache.events);
+    const dayEvents = getEventsForDateRange(dayStart, dayEnd, calendarCache.events) || [];
     
     // Add events to day cell
     dayEvents.slice(0, 3).forEach(event => {

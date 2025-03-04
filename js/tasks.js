@@ -1081,7 +1081,7 @@ async function confirmDeleteTask(taskId) {
 // Handle task checkbox change
 async function handleTaskCheckboxChange(event) {
   const checkbox = event.target;
-  const taskId = checkbox.dataset.taskId;
+  const taskId = checkbox.dataset.taskId || checkbox.id.replace('task-', '').replace('card-', '').replace('detail-', '');
   const isChecked = checkbox.checked;
   
   try {
@@ -1403,74 +1403,6 @@ async function updateTaskStatus(taskId, newStatus) {
   } catch (error) {
     console.error('Error updating task status:', error);
     showNotification('Failed to update task status', 'error');
-  }
-}
-
-// Handle task checkbox change
-async function handleTaskCheckboxChange(event) {
-  const checkbox = event.target;
-  const taskId = checkbox.dataset.taskId;
-  const isChecked = checkbox.checked;
-  
-  try {
-    // Get task from database
-    const task = await getTaskById(taskId);
-    if (!task) {
-      showNotification('Task not found', 'error');
-      return;
-    }
-    
-    // Update task based on current status
-    if (isChecked) {
-      // If task is in todo, move to in-progress when checked
-      if (task.status === 'todo') {
-        task.status = 'in-progress';
-        task.completed = false;
-      } else {
-        // If already in progress, mark as completed
-        task.completed = true;
-        task.completedDate = new Date().toISOString();
-      }
-    } else {
-      // When unchecked, always mark as incomplete
-      task.completed = false;
-      task.completedDate = null;
-      
-      // If it was completed, move back to in-progress
-      if (task.status !== 'todo') {
-        task.status = 'in-progress';
-      }
-    }
-    
-    task.updatedAt = new Date().toISOString();
-    
-    // Save to database
-    await updateTask(task);
-    
-    // Show notification
-    if (isChecked) {
-      if (task.completed) {
-        showNotification('Task marked as completed', 'success');
-      } else {
-        showNotification('Task moved to in progress', 'info');
-      }
-    } else {
-      showNotification('Task marked as incomplete', 'info');
-    }
-    
-    // Refresh tasks view
-    await refreshTasks();
-    
-    // Also update dashboard if it's active
-    if (appState.currentView === 'dashboard') {
-      updateDashboard();
-    }
-  } catch (error) {
-    console.error('Error updating task completion:', error);
-    showNotification('Failed to update task', 'error');
-    
-    // Revert checkbox state
-    checkbox.checked = !isChecked;
   }
 }
 

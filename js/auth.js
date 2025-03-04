@@ -11,7 +11,7 @@ function initLocalAuth() {
   checkLocalLoginStatus();
   
   // Set up auth-related DOM event listeners
-  document.getElementById('login-button').addEventListener('click', showLocalLoginModal);
+  document.getElementById('login-button').addEventListener('click', showUserSwitcherModal);
 }
 
 // Check if user is already logged in via local storage
@@ -101,160 +101,79 @@ async function updateSignInStatus(isSignedIn, user = null) {
   }
 }
 
-// Show login modal
-function showLocalLoginModal() {
-  const content = `
-    <div class="login-container">
-      <div class="login-options">
-        <div class="tab-controls">
-          <button class="tab-btn active" data-tab="login">Login</button>
-          <button class="tab-btn" data-tab="register">Register</button>
-        </div>
-        
-        <div class="tab-content">
-          <div id="login-tab" class="tab-pane active">
-            <form id="login-form">
-              <div class="form-group">
-                <label for="login-email">Email</label>
-                <input type="email" id="login-email" required>
-              </div>
-              <div class="form-group">
-                <label for="login-password">Password</label>
-                <input type="password" id="login-password" required>
-              </div>
-              <div class="form-group">
-                <button type="submit" class="btn btn-primary login-submit">Login</button>
-              </div>
-            </form>
-          </div>
-          
-          <div id="register-tab" class="tab-pane">
-            <form id="register-form">
-              <div class="form-group">
-                <label for="register-name">Full Name</label>
-                <input type="text" id="register-name" required>
-              </div>
-              <div class="form-group">
-                <label for="register-email">Email</label>
-                <input type="email" id="register-email" required>
-              </div>
-              <div class="form-group">
-                <label for="register-password">Password</label>
-                <input type="password" id="register-password" required minlength="6">
-              </div>
-              <div class="form-group">
-                <label for="register-color">Profile Color</label>
-                <input type="color" id="register-color" value="#4285F4">
-              </div>
-              <div class="form-group">
-                <button type="submit" class="btn btn-primary register-submit">Create Account</button>
-              </div>
-            </form>
-          </div>
-        </div>
+// Show user switcher modal
+function showUserSwitcherModal() {
+  // Get current user and family members
+  const currentUser = appState.currentUser;
+  const family = appState.family || [];
+  
+  // Create options HTML
+  let familyOptions = '';
+  
+  // Add option for current user/account owner
+  familyOptions += `
+    <div class="user-option ${!appState.activeFamilyMember ? 'active' : ''}" data-user-type="owner">
+      <div class="user-avatar" style="background-color: ${currentUser?.color || '#4285F4'}">
+        ${currentUser?.name?.charAt(0) || 'U'}
+      </div>
+      <div class="user-info">
+        <div class="user-name">${currentUser?.name || 'Account Owner'}</div>
+        <div class="user-role">Account Owner</div>
       </div>
     </div>
   `;
   
-  showModal('Family Organizer Account', content);
+  // Add options for family members
+  family.forEach(member => {
+    const isActive = appState.activeFamilyMember?.id === member.id;
+    familyOptions += `
+      <div class="user-option ${isActive ? 'active' : ''}" data-user-type="family" data-member-id="${member.id}">
+        <div class="user-avatar" style="background-color: ${member.color || '#4285F4'}">
+          ${member.name.charAt(0)}
+        </div>
+        <div class="user-info">
+          <div class="user-name">${member.name}</div>
+          <div class="user-role">${capitalizeFirstLetter(member.role || 'Family Member')}</div>
+        </div>
+      </div>
+    `;
+  });
   
-  // Set up event listeners
-  const tabBtns = document.querySelectorAll('.tab-btn');
-  tabBtns.forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      const tabName = e.target.dataset.tab;
+  // Create modal content
+  const content = `
+    <div class="user-switcher-container">
+      <h3>Switch User</h3>
+      <p>Select which user account to view:</p>
+      <div class="user-options">
+        ${familyOptions}
+      </div>
+      ${!family.length ? '<p class="no-family-message">Add family members in the Family section to see more options.</p>' : ''}
+    </div>
+  `;
+  
+  showModal('Switch User', content);
+  
+  // Add event listeners to options
+  document.querySelectorAll('.user-option').forEach(option => {
+    option.addEventListener('click', () => {
+      const userType = option.dataset.userType;
       
-      // Update active tab button
-      tabBtns.forEach(b => b.classList.remove('active'));
-      e.target.classList.add('active');
+      if (userType === 'owner') {
+        // Switch to owner account
+        returnToOwnerAccount();
+      } else if (userType === 'family') {
+        const memberId = option.dataset.memberId;
+        const member = family.find(m => m.id === memberId);
+        
+        if (member) {
+          // Switch to family member
+          switchToFamilyMember(member);
+        }
+      }
       
-      // Update active tab content
-      document.querySelectorAll('.tab-pane').forEach(pane => {
-        pane.classList.remove('active');
-      });
-      document.getElementById(`${tabName}-tab`).classList.add('active');
+      closeModal();
     });
   });
-  
-  // Form submissions
-  document.getElementById('login-form').addEventListener('submit', (e) => {
-    e.preventDefault();
-    handleLocalLogin();
-  });
-  
-  document.getElementById('register-form').addEventListener('submit', (e) => {
-    e.preventDefault();
-    handleLocalRegister();
-  });
-}
-
-// Handle local login
-async function handleLocalLogin() {
-  const email = document.getElementById('login-email').value;
-  const password = document.getElementById('login-password').value;
-  
-  // Get users from localStorage
-  let users = JSON.parse(localStorage.getItem('users') || '[]');
-  
-  // Find user with matching email
-  const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-  
-  if (!user) {
-    showNotification('User not found. Please register first.', 'error');
-    return;
-  }
-  
-  // Basic password check (in a real app, this would use proper hashing)
-  if (user.password !== password) {
-    showNotification('Incorrect password. Please try again.', 'error');
-    return;
-  }
-  
-  // Login successful
-  localStorage.setItem('currentUser', JSON.stringify(user));
-  closeModal();
-  updateSignInStatus(true, user);
-}
-
-// Handle local registration
-async function handleLocalRegister() {
-  const name = document.getElementById('register-name').value;
-  const email = document.getElementById('register-email').value;
-  const password = document.getElementById('register-password').value;
-  const color = document.getElementById('register-color').value;
-  
-  // Get existing users
-  let users = JSON.parse(localStorage.getItem('users') || '[]');
-  
-  // Check if email already exists
-  if (users.some(u => u.email.toLowerCase() === email.toLowerCase())) {
-    showNotification('This email is already registered. Please login instead.', 'error');
-    return;
-  }
-  
-  // Create new user
-  const newUser = {
-    id: 'user_' + Date.now(),
-    name: name,
-    email: email,
-    password: password, // In a real app, this would be hashed
-    color: color,
-    role: 'admin',
-    createdAt: new Date().toISOString(),
-    lastLogin: new Date().toISOString(),
-    notifications: 'all'
-  };
-  
-  // Add to local storage
-  users.push(newUser);
-  localStorage.setItem('users', JSON.stringify(users));
-  
-  // Log the user in
-  localStorage.setItem('currentUser', JSON.stringify(newUser));
-  closeModal();
-  updateSignInStatus(true, newUser);
-  
-  showNotification('Account created successfully!', 'success');
 }
 
 // Handle logout
@@ -384,3 +303,17 @@ function getNextFamilyColor() {
   // Return the first unused color or the first color if all are used
   return availableColor || colors[0];
 }
+
+// Note that the following functions were not provided in the original code and are assumed to be defined elsewhere:
+// - showModal
+// - closeModal
+// - showNotification
+// - returnToOwnerAccount
+// - switchToFamilyMember
+// - capitalizeFirstLetter
+// - getUserById
+// - updateUser
+// - addUser
+// - getFamilyMembersByUserId
+// - addFamilyMember
+// - loadViewData

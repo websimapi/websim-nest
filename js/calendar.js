@@ -975,7 +975,7 @@ function showAddEventModal(date) {
   const selectedDate = date || calendarState.currentDate;
   
   // Format date for form
-  const dateStr = selectedDate.toISOString().split('T')[0];
+  const dateStr = selectedDate instanceof Date ? selectedDate.toISOString().split('T')[0] : selectedDate;
   
   // Set default times (current time rounded to nearest half hour)
   const now = new Date();

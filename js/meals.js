@@ -32,6 +32,11 @@ async function loadMealPlanner() {
     // Create meal planner interface
     mealsView.innerHTML = `
       <h1>Meal Planning</h1>
+      ${appState.activeFamilyMember ? 
+        `<div class="viewing-as-member-banner">
+          <i class="material-icons">visibility</i>
+          <span>Viewing as ${appState.activeFamilyMember.name}</span>
+        </div>` : ''}
       
       <div class="meal-controls">
         <div class="date-navigation">
@@ -40,7 +45,7 @@ async function loadMealPlanner() {
           <button id="next-week" class="btn btn-icon"><i class="material-icons">chevron_right</i></button>
         </div>
         
-        <button id="add-meal-btn" class="btn btn-primary">
+        <button id="add-meal-btn" class="btn btn-primary" ${appState.activeFamilyMember && appState.activeFamilyMember.accessLevel === 'restricted' ? 'disabled' : ''}>
           <i class="material-icons">add</i>
           <span>Add Meal</span>
         </button>
@@ -60,7 +65,7 @@ async function loadMealPlanner() {
           <div class="recipe-list" id="recipe-list">
             <!-- Recipes will be loaded here -->
           </div>
-          <button id="add-recipe-btn" class="btn btn-outline">
+          <button id="add-recipe-btn" class="btn btn-outline" ${appState.activeFamilyMember && appState.activeFamilyMember.accessLevel === 'restricted' ? 'disabled' : ''}>
             <i class="material-icons">add</i>
             <span>Add Recipe</span>
           </button>

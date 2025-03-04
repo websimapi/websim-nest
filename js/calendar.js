@@ -90,7 +90,18 @@ async function syncEventDeleteToGoogle(event) {
 async function refreshEventCache() {
   try {
     // Get all events from IndexedDB
-    const events = await getAllEvents();
+    let events = await getAllEvents();
+    
+    // If viewing as family member, filter events
+    if (appState.activeFamilyMember) {
+      // This is a simplified approach - in a real app, you'd track event ownership
+      // Here we just filter by events that include the family member's name
+      events = events.filter(event => 
+        event.summary.toLowerCase().includes(appState.activeFamilyMember.name.toLowerCase()) ||
+        (event.description && event.description.toLowerCase().includes(appState.activeFamilyMember.name.toLowerCase()))
+      );
+    }
+    
     calendarCache.events = events;
     return events;
   } catch (error) {

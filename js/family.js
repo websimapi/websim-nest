@@ -255,6 +255,10 @@ function displayFamilyMembers(familyMembers) {
         ${member.notes ? `<div class="member-notes">"${member.notes}"</div>` : ''}
       </div>
       <div class="member-actions">
+        <button class="btn btn-primary switch-to-member-btn" data-member-id="${member.id}" title="Switch to this account">
+          <i class="material-icons">switch_account</i>
+          <span>Switch to</span>
+        </button>
         <button class="btn btn-icon view-member-btn" data-member-id="${member.id}" title="View details">
           <i class="material-icons">visibility</i>
         </button>
@@ -281,6 +285,11 @@ function displayFamilyMembers(familyMembers) {
   
   familyGrid.querySelectorAll('.delete-member-btn').forEach(button => {
     button.addEventListener('click', handleDeleteFamilyMemberClick);
+  });
+  
+  // Add event listener for switch-to-member buttons
+  familyGrid.querySelectorAll('.switch-to-member-btn').forEach(button => {
+    button.addEventListener('click', handleSwitchToMember);
   });
 }
 
@@ -820,4 +829,115 @@ function getMemberActivityStatus(member) {
 // Helper function to capitalize first letter
 function capitalizeFirstLetter(string) {
   return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
+// Handle switching to a family member's account view
+function handleSwitchToMember(event) {
+  const memberId = event.currentTarget.dataset.memberId;
+  
+  // Get family member from database
+  getFamilyMemberById(memberId).then(member => {
+    if (!member) {
+      showNotification('Family member not found', 'error');
+      return;
+    }
+    
+    // Switch to the member's view
+    switchToFamilyMember(member);
+  }).catch(error => {
+    console.error('Error switching to family member:', error);
+    showNotification('Failed to switch accounts', 'error');
+  });
+}
+
+// Switch the app view to a family member's account
+function switchToFamilyMember(member) {
+  // Store the original user for switching back
+  if (!appState.originalUser) {
+    appState.originalUser = appState.currentUser;
+  }
+  
+  // Set the active family member
+  appState.activeFamilyMember = member;
+  
+  // Update the UI to show we're in a family member's view
+  updateActiveMemberUI(member);
+  
+  // Reload the current view with the member's context
+  loadViewData(appState.currentView);
+  
+  showNotification(`Switched to ${member.name}'s account`, 'success');
+}
+
+// Update UI to show we're viewing as a family member
+function updateActiveMemberUI(member) {
+  // Update user name display
+  document.getElementById('user-name').textContent = `${member.name} (View)`;
+  
+  // Update user avatar with member color
+  const avatar = document.getElementById('user-avatar');
+  const initials = member.name.split(' ')
+    .map(part => part.charAt(0).toUpperCase())
+    .join('')
+    .substring(0, 2);
+  
+  // Create canvas for the avatar
+  const canvas = document.createElement('canvas');
+  canvas.width = 100;
+  canvas.height = 100;
+  const ctx = canvas.getContext('2d');
+  
+  // Draw background
+  ctx.fillStyle = member.color || '#4285F4';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // Draw text
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = 'bold 40px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(initials, canvas.width / 2, canvas.height / 2);
+  
+  // Set the avatar
+  avatar.src = canvas.toDataURL('image/png');
+  
+  // Add "return to owner" button to dropdown
+  const dropdown = document.querySelector('.dropdown-content');
+  
+  // Check if we already have the button
+  if (!document.getElementById('return-to-owner')) {
+    const returnLink = document.createElement('a');
+    returnLink.href = '#';
+    returnLink.id = 'return-to-owner';
+    returnLink.textContent = 'Return to Owner Account';
+    returnLink.addEventListener('click', returnToOwnerAccount);
+    dropdown.insertBefore(returnLink, dropdown.firstChild);
+  }
+}
+
+// Return to the owner's account
+function returnToOwnerAccount(event) {
+  if (event) event.preventDefault();
+  
+  if (appState.originalUser) {
+    // Restore original user
+    appState.currentUser = appState.originalUser;
+    appState.originalUser = null;
+    appState.activeFamilyMember = null;
+    
+    // Update UI
+    document.getElementById('user-name').textContent = appState.currentUser.name;
+    document.getElementById('user-avatar').src = generateInitialsAvatar(appState.currentUser.name);
+    
+    // Remove "return to owner" button
+    const returnLink = document.getElementById('return-to-owner');
+    if (returnLink) {
+      returnLink.remove();
+    }
+    
+    // Reload the current view
+    loadViewData(appState.currentView);
+    
+    showNotification('Returned to owner account', 'success');
+  }
 }

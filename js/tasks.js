@@ -256,6 +256,11 @@ function filterTasksByType(tasks, filterType) {
 
 // Filter tasks by assignee
 function filterTasksByAssignee(tasks, assigneeId) {
+  // If viewing as a family member, override to only show their tasks
+  if (appState.activeFamilyMember && assigneeId === 'all') {
+    return tasks.filter(task => task.assigneeId === appState.activeFamilyMember.id);
+  }
+  
   if (assigneeId === 'all') {
     return tasks;
   }

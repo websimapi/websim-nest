@@ -20,7 +20,9 @@ const appState = {
     theme: 'light',
     notifications: true,
     colorCoding: true,
-  }
+  },
+  originalUser: null,
+  activeFamilyMember: null
 };
 
 // Initialize the application
@@ -176,7 +178,20 @@ async function updateDashboard() {
     updateTodayEvents(events);
     
     // Load today's tasks
-    const tasks = await getTasksForDay(today);
+    let tasks;
+    if (appState.activeFamilyMember) {
+      // If viewing as family member, only show their tasks
+      tasks = await getTasksByAssignee(appState.activeFamilyMember.id);
+      // Filter for today only
+      tasks = tasks.filter(task => {
+        const taskDate = new Date(task.dueDate);
+        taskDate.setHours(0, 0, 0, 0);
+        return taskDate.getTime() === today.getTime();
+      });
+    } else {
+      // Otherwise show all tasks for today
+      tasks = await getTasksForDay(today);
+    }
     updateTodayTasks(tasks);
     
     // Load today's meals

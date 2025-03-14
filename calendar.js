@@ -118,7 +118,7 @@ function initCalendarView() {
   document.getElementById('prev-month').addEventListener('click', navigateToPreviousMonth);
   document.getElementById('next-month').addEventListener('click', navigateToNextMonth);
   document.getElementById('sync-calendar').addEventListener('click', handleManualSync);
-  document.getElementById('add-event').addEventListener('click', showAddEventModal);
+  document.getElementById('add-event').addEventListener('click', () => showAddEventModal(calendarState.selectedDate));
   
   // Set up view option buttons
   document.querySelectorAll('.view-options button').forEach(button => {

@@ -81,17 +81,27 @@ function initNavigationControls() {
   // Add toggle button for header
   const toggleHeaderBtn = document.createElement('button');
   toggleHeaderBtn.id = 'toggle-header-btn';
-  toggleHeaderBtn.className = 'btn btn-icon toggle-header-btn';
+  toggleHeaderBtn.className = 'btn btn-icon toggle-header-btn toggle-section-btn';
   toggleHeaderBtn.innerHTML = '<i class="material-icons">expand_less</i>';
   document.querySelector('main').prepend(toggleHeaderBtn);
+  
+  // Add toggle button for controls/filters
+  const toggleControlsBtn = document.createElement('button');
+  toggleControlsBtn.id = 'toggle-controls-btn';
+  toggleControlsBtn.className = 'btn btn-icon toggle-controls-btn';
+  toggleControlsBtn.innerHTML = '<i class="material-icons">filter_list</i>';
+  toggleControlsBtn.setAttribute('title', 'Toggle Filters');
+  document.querySelector('main').appendChild(toggleControlsBtn);
   
   // Set up event listeners
   toggleSidebarBtn.addEventListener('click', toggleSidebar);
   toggleHeaderBtn.addEventListener('click', toggleHeader);
+  toggleControlsBtn.addEventListener('click', toggleControls);
   
   // Check local storage for saved state
   const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
   const headerHidden = localStorage.getItem('headerHidden') === 'true';
+  const controlsHidden = localStorage.getItem('controlsHidden') === 'true';
   
   // Apply saved states
   if (sidebarCollapsed) {
@@ -101,6 +111,10 @@ function initNavigationControls() {
   if (headerHidden) {
     document.body.classList.add('header-hidden');
     toggleHeaderBtn.querySelector('i').textContent = 'expand_more';
+  }
+  
+  if (controlsHidden) {
+    document.body.classList.add('controls-hidden');
   }
 }
 
@@ -118,6 +132,20 @@ function toggleHeader() {
   // Update icon
   const icon = document.getElementById('toggle-header-btn').querySelector('i');
   icon.textContent = headerHidden ? 'expand_more' : 'expand_less';
+}
+
+// Toggle controls visibility
+function toggleControls() {
+  const controlsHidden = document.body.classList.toggle('controls-hidden');
+  localStorage.setItem('controlsHidden', controlsHidden);
+  
+  // Update tooltips
+  const btn = document.getElementById('toggle-controls-btn');
+  if (controlsHidden) {
+    btn.setAttribute('title', 'Show Filters');
+  } else {
+    btn.setAttribute('title', 'Hide Filters');
+  }
 }
 
 // Set up main event listeners

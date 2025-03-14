@@ -13,7 +13,8 @@ const calendarState = {
   currentDate: new Date(),
   viewMode: 'month',
   selectedCalendars: [],
-  draggedEvent: null
+  draggedEvent: null,
+  selectedDate: null
 };
 
 // Initialize calendar synchronization
@@ -280,9 +281,20 @@ function renderMonthView(container) {
     const dayCell = document.createElement('div');
     dayCell.className = 'calendar-day';
     
+    // Create date for this cell
+    const cellDate = new Date(year, month, day);
+    
     // Highlight today
     if (isCurrentMonth && day === today.getDate()) {
       dayCell.classList.add('today');
+    }
+    
+    // Highlight selected date if it exists and matches this cell
+    if (calendarState.selectedDate && 
+        cellDate.getDate() === calendarState.selectedDate.getDate() &&
+        cellDate.getMonth() === calendarState.selectedDate.getMonth() &&
+        cellDate.getFullYear() === calendarState.selectedDate.getFullYear()) {
+      dayCell.classList.add('selected');
     }
     
     // Day number display
@@ -380,6 +392,18 @@ function renderMonthView(container) {
     dayCell.addEventListener('drop', handleDrop);
     dayCell.addEventListener('dragleave', (e) => {
       e.currentTarget.classList.remove('drag-over');
+    });
+    
+    // Click to select this date
+    dayCell.addEventListener('click', () => {
+      // Clear previous selection
+      document.querySelectorAll('.calendar-day.selected').forEach(cell => {
+        cell.classList.remove('selected');
+      });
+      
+      // Set new selection
+      dayCell.classList.add('selected');
+      calendarState.selectedDate = new Date(date);
     });
     
     // Double click to add event on this date
@@ -982,8 +1006,8 @@ function showEventDetails(event) {
 
 // Show modal to add a new event
 function showAddEventModal(date) {
-  // Use provided date or current date
-  const selectedDate = date || calendarState.currentDate;
+  // Use provided date, selected date, or current date
+  const selectedDate = date || calendarState.selectedDate || calendarState.currentDate;
   
   // Format date for form
   const dateStr = selectedDate instanceof Date ? 

@@ -383,10 +383,7 @@ function renderMonthView(container) {
     });
     
     // Double click to add event on this date
-    dayCell.addEventListener('dblclick', () => {
-      const clickedDate = new Date(year, month, day);
-      showAddEventModal(clickedDate);
-    });
+    dayCell.addEventListener('dblclick', () => showAddEventModal(date));
     
     // Add to calendar grid
     calendarGrid.appendChild(dayCell);
@@ -986,12 +983,10 @@ function showEventDetails(event) {
 // Show modal to add a new event
 function showAddEventModal(date) {
   // Use provided date or current date
-  const selectedDate = date instanceof Date ? date : 
-                       typeof date === 'string' ? new Date(date) : 
-                       calendarState.currentDate;
+  const selectedDate = date || calendarState.currentDate;
   
   // Format date for form
-  const dateStr = selectedDate.toISOString().split('T')[0];
+  const dateStr = selectedDate instanceof Date ? selectedDate.toISOString().split('T')[0] : selectedDate;
   
   // Set default times (current time rounded to nearest half hour)
   const now = new Date();
@@ -1007,14 +1002,27 @@ function showAddEventModal(date) {
     calendarOptions += `<option value="${calendar.id}">${calendar.summary}</option>`;
   });
   
-  // Build color selection options
+  // Build color selection options with visual color swatches
   let colorOptions = '';
-  for (let i = 1; i <= 11; i++) {
-    const color = getColorForId(i.toString());
+  const colorMap = {
+    '1': '#7986CB', // Lavender
+    '2': '#33B679', // Sage
+    '3': '#8E24AA', // Grape
+    '4': '#E67C73', // Flamingo
+    '5': '#F6BF26', // Banana
+    '6': '#F4511E', // Tangerine
+    '7': '#039BE5', // Peacock
+    '8': '#616161', // Graphite
+    '9': '#3F51B5', // Blueberry
+    '10': '#0B8043', // Basil
+    '11': '#D50000', // Tomato
+  };
+  
+  for (const [id, color] of Object.entries(colorMap)) {
     colorOptions += `
-      <option value="${i}" style="background-color: ${color}; color: white;">
-        Color ${i}
-      </option>
+      <div class="color-option ${id === '1' ? 'selected' : ''}" data-color-id="${id}">
+        <div class="color-swatch" style="background-color: ${color}"></div>
+      </div>
     `;
   }
   
@@ -1023,66 +1031,125 @@ function showAddEventModal(date) {
     <form id="add-event-form" class="event-form">
       <div class="form-group">
         <label for="event-title">Event Title *</label>
-        <input type="text" id="event-title" required placeholder="Enter event title">
+        <div class="input-with-icon">
+          <i class="material-icons">event</i>
+          <input type="text" id="event-title" required placeholder="Enter event title">
+        </div>
       </div>
       
-      <div class="form-group">
-        <label for="event-all-day">All Day Event</label>
-        <input type="checkbox" id="event-all-day">
+      <div class="event-type-toggle">
+        <label>Event Type:</label>
+        <div class="toggle-container">
+          <label for="event-all-day" class="toggle-option ${selectedDate instanceof Date ? '' : 'active'}">
+            <input type="radio" id="event-timed" name="event-type" value="timed" ${selectedDate instanceof Date ? 'checked' : ''}>
+            <span>Timed</span>
+          </label>
+          <label for="event-all-day" class="toggle-option ${selectedDate instanceof Date ? '' : 'active'}">
+            <input type="radio" id="event-all-day" name="event-type" value="allday" ${selectedDate instanceof Date ? '' : 'checked'}>
+            <span>All Day</span>
+          </label>
+        </div>
       </div>
       
       <div class="form-row time-inputs">
         <div class="form-group">
           <label for="event-date">Date *</label>
-          <input type="date" id="event-date" required value="${dateStr}">
+          <div class="input-with-icon">
+            <i class="material-icons">calendar_today</i>
+            <input type="date" id="event-date" required value="${dateStr}">
+          </div>
         </div>
         
         <div class="form-group start-time">
           <label for="event-start-time">Start Time *</label>
-          <input type="time" id="event-start-time" required value="${startTime}">
+          <div class="input-with-icon">
+            <i class="material-icons">access_time</i>
+            <input type="time" id="event-start-time" required value="${startTime}">
+          </div>
         </div>
         
         <div class="form-group end-time">
           <label for="event-end-time">End Time *</label>
-          <input type="time" id="event-end-time" required value="${endTime}">
+          <div class="input-with-icon">
+            <i class="material-icons">access_time</i>
+            <input type="time" id="event-end-time" required value="${endTime}">
+          </div>
         </div>
       </div>
       
       <div class="form-group">
         <label for="event-location">Location</label>
-        <input type="text" id="event-location" placeholder="Add location">
+        <div class="input-with-icon">
+          <i class="material-icons">place</i>
+          <input type="text" id="event-location" placeholder="Add location">
+        </div>
       </div>
       
-      <div class="form-row">
-        <div class="form-group">
-          <label for="event-calendar">Calendar</label>
+      <div class="form-group">
+        <label for="event-calendar">Calendar</label>
+        <div class="input-with-icon">
+          <i class="material-icons">event_note</i>
           <select id="event-calendar">
             ${calendarOptions}
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label for="event-color">Color</label>
-          <select id="event-color">
-            ${colorOptions}
           </select>
         </div>
       </div>
       
       <div class="form-group">
+        <label>Color</label>
+        <div class="color-selector">
+          ${colorOptions}
+          <input type="hidden" id="event-color" value="1">
+        </div>
+      </div>
+      
+      <div class="form-group">
         <label for="event-description">Description</label>
-        <textarea id="event-description" rows="3" placeholder="Add description"></textarea>
+        <div class="input-with-icon textarea-icon">
+          <i class="material-icons">notes</i>
+          <textarea id="event-description" rows="3" placeholder="Add description"></textarea>
+        </div>
       </div>
     </form>
   `;
   
   showModal('Add Event', content, handleAddEvent);
   
-  // Handle all-day checkbox
+  // Handle event type toggle (timed vs all-day)
   document.getElementById('event-all-day').addEventListener('change', function() {
     const timeInputs = document.querySelectorAll('.time-inputs .form-group.start-time, .time-inputs .form-group.end-time');
-    timeInputs.forEach(input => {
-      input.style.display = this.checked ? 'none' : 'block';
+    if (this.checked) {
+      timeInputs.forEach(input => {
+        input.style.display = 'none';
+      });
+    }
+  });
+  
+  document.getElementById('event-timed').addEventListener('change', function() {
+    const timeInputs = document.querySelectorAll('.time-inputs .form-group.start-time, .time-inputs .form-group.end-time');
+    if (this.checked) {
+      timeInputs.forEach(input => {
+        input.style.display = 'block';
+      });
+    }
+  });
+  
+  // Set initial display state for time inputs
+  if (!selectedDate instanceof Date) {
+    document.querySelectorAll('.time-inputs .form-group.start-time, .time-inputs .form-group.end-time').forEach(input => {
+      input.style.display = 'none';
+    });
+  }
+  
+  // Handle color selector
+  document.querySelectorAll('.color-option').forEach(option => {
+    option.addEventListener('click', () => {
+      // Remove selected class from all options
+      document.querySelectorAll('.color-option').forEach(o => o.classList.remove('selected'));
+      // Add selected class to clicked option
+      option.classList.add('selected');
+      // Update hidden input value
+      document.getElementById('event-color').value = option.dataset.colorId;
     });
   });
 }

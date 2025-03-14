@@ -2099,59 +2099,216 @@ input:checked + .toggle-slider:before {
   gap: 16px;
 }
 
-.meal-or-divider {
-  position: relative;
-  text-align: center;
-  margin: 16px 0;
+.form-row {
+  display: flex;
+  gap: 16px;
 }
 
-.meal-or-divider:before {
-  content: '';
+.form-group {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.form-group label {
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+/* Task Details Modal */
+.task-details {
+  padding: 8px 0;
+}
+
+.task-header {
+  padding: 16px;
+  margin-bottom: 16px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.task-header h3 {
+  margin: 0;
+  font-weight: 500;
+  font-size: 18px;
+  margin-left: 40px;
+}
+
+.task-header.priority-high {
+  border-left: 4px solid var(--accent-color);
+}
+
+.task-header.priority-medium {
+  border-left: 4px solid var(--warning-color);
+}
+
+.task-header.priority-low {
+  border-left: 4px solid var(--secondary-color);
+}
+
+.task-status-container {
+  margin-right: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.status-button {
+  border-radius: 50%;
+  padding: 4px;
+  transition: background-color 0.2s;
+}
+
+.progress-button {
+  color: #4285F4;
+  border: 1px solid #4285F4;
+}
+
+.progress-button:hover {
+  background-color: rgba(66, 133, 244, 0.1);
+  transform: scale(1.1);
+}
+
+.complete-button {
+  color: #34A853;
+  border: 1px solid #34A853;
+}
+
+.complete-button:hover {
+  background-color: rgba(52, 168, 83, 0.1);
+  transform: scale(1.1);
+}
+
+.completed-status {
+  color: white;
+  background-color: var(--secondary-color);
+  border: 2px solid var(--secondary-color);
+}
+
+/* Enhanced Event Form Styles */
+.event-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.input-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-with-icon i {
   position: absolute;
-  top: 50%;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background-color: var(--border-color);
-  z-index: 1;
-}
-
-.meal-or-divider span {
-  position: relative;
-  z-index: 2;
-  background-color: var(--background-light);
-  padding: 0 16px;
+  left: 10px;
   color: var(--text-secondary);
 }
 
-.meal-type-badge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 12px;
-  margin-right: 8px;
+.input-with-icon input,
+.input-with-icon select,
+.input-with-icon textarea {
+  padding-left: 40px;
+  width: 100%;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 10px 10px 10px 40px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px;
+  transition: border-color 0.2s;
 }
 
-.meal-type-badge.breakfast {
-  background-color: #FFF8E1;
-  color: #FF6F00;
+.input-with-icon input:focus,
+.input-with-icon select:focus,
+.input-with-icon textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
 }
 
-.meal-type-badge.lunch {
-  background-color: #E1F5FE;
-  color: #0288D1;
+.textarea-icon i {
+  top: 10px;
 }
 
-.meal-type-badge.dinner {
-  background-color: #E8F5E9;
-  color: #2E7D32;
+.event-type-toggle {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
-.meal-type-badge.snack {
-  background-color: #F3E5F5;
-  color: #7B1FA2;
+.toggle-container {
+  display: flex;
+  background-color: var(--background-off);
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
 }
 
+.toggle-option {
+  padding: 8px 16px;
+  cursor: pointer;
+  position: relative;
+  user-select: none;
+}
+
+.toggle-option input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.toggle-option span {
+  position: relative;
+  z-index: 1;
+}
+
+.toggle-option input:checked + span {
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+.toggle-option.active {
+  background-color: var(--background-light);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.color-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.color-option {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid transparent;
+  transition: transform 0.2s;
+}
+
+.color-option:hover {
+  transform: scale(1.1);
+}
+
+.color-option.selected {
+  border-color: var(--text-primary);
+  transform: scale(1.1);
+}
+
+.color-swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+}
+
+/* Meal Details Modal Styles */
 .meal-details, .recipe-details-modal {
   padding: 8px 0;
 }

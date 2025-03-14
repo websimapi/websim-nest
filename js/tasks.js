@@ -156,7 +156,6 @@ async function loadTasks() {
     
     // Fetch and display tasks
     await refreshTasks();
-    
   } catch (error) {
     console.error('Error loading tasks:', error);
     showNotification('Failed to load tasks', 'error');
@@ -515,7 +514,7 @@ function createTaskCardElement(task) {
   let statusButton = '';
   if (task.completed) {
     statusButton = `
-      <button class="btn btn-icon status-button" disabled>
+      <button class="btn btn-icon status-button completed-status" disabled>
         <i class="material-icons">done_all</i>
       </button>
     `;
@@ -1472,6 +1471,19 @@ async function updateTaskStatus(taskId, newStatus) {
     console.error('Error updating task status:', error);
     showNotification('Failed to update task status', 'error');
   }
+}
+
+// Load the chore chart
+async function loadChoreChart() {
+  // Functionality removed as requested
+}
+
+function showAddChoreModal(day, assigneeId) {
+  // Functionality removed as requested
+}
+
+async function handleAddChore() {
+  // Functionality removed as requested
 }
 
 // Get all tasks from the database

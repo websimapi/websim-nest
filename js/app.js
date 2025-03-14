@@ -63,7 +63,61 @@ async function initApp() {
   // Initialize UI
   initUI();
 
+  // Initialize navigation controls
+  initNavigationControls();
+
   console.log('App initialization complete');
+}
+
+// Initialize navigation controls for collapsible sidebar and header
+function initNavigationControls() {
+  // Add toggle button to sidebar
+  const toggleSidebarBtn = document.createElement('button');
+  toggleSidebarBtn.id = 'toggle-sidebar-btn';
+  toggleSidebarBtn.className = 'btn btn-icon toggle-nav-btn';
+  toggleSidebarBtn.innerHTML = '<i class="material-icons">menu</i>';
+  document.querySelector('.app-header').prepend(toggleSidebarBtn);
+  
+  // Add toggle button for header
+  const toggleHeaderBtn = document.createElement('button');
+  toggleHeaderBtn.id = 'toggle-header-btn';
+  toggleHeaderBtn.className = 'btn btn-icon toggle-header-btn';
+  toggleHeaderBtn.innerHTML = '<i class="material-icons">expand_less</i>';
+  document.querySelector('main').prepend(toggleHeaderBtn);
+  
+  // Set up event listeners
+  toggleSidebarBtn.addEventListener('click', toggleSidebar);
+  toggleHeaderBtn.addEventListener('click', toggleHeader);
+  
+  // Check local storage for saved state
+  const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+  const headerHidden = localStorage.getItem('headerHidden') === 'true';
+  
+  // Apply saved states
+  if (sidebarCollapsed) {
+    document.body.classList.add('sidebar-collapsed');
+  }
+  
+  if (headerHidden) {
+    document.body.classList.add('header-hidden');
+    toggleHeaderBtn.querySelector('i').textContent = 'expand_more';
+  }
+}
+
+// Toggle sidebar visibility
+function toggleSidebar() {
+  const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
+  localStorage.setItem('sidebarCollapsed', isCollapsed);
+}
+
+// Toggle header visibility
+function toggleHeader() {
+  const headerHidden = document.body.classList.toggle('header-hidden');
+  localStorage.setItem('headerHidden', headerHidden);
+  
+  // Update icon
+  const icon = document.getElementById('toggle-header-btn').querySelector('i');
+  icon.textContent = headerHidden ? 'expand_more' : 'expand_less';
 }
 
 // Set up main event listeners

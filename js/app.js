@@ -92,6 +92,7 @@ function initNavigationControls() {
   // Check local storage for saved state
   const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
   const headerHidden = localStorage.getItem('headerHidden') === 'true';
+  const autoHideSidebar = localStorage.getItem('autoHideSidebar') !== 'false'; // Default to true
   
   // Apply saved states
   if (sidebarCollapsed) {
@@ -103,28 +104,10 @@ function initNavigationControls() {
     toggleHeaderBtn.querySelector('i').textContent = 'expand_more';
   }
   
-  // Set up auto-hide behavior for desktop
-  setupSidebarAutoHide();
-}
-
-// Add this new function for sidebar auto-hide
-function setupSidebarAutoHide() {
-  const app = document.getElementById('app');
-  const nav = document.querySelector('.app-nav');
-  
-  // Add hover listeners if not on mobile
-  if (window.innerWidth > 900) {
-    nav.addEventListener('mouseenter', () => {
-      app.classList.remove('sidebar-collapsed');
-    });
-    
-    nav.addEventListener('mouseleave', () => {
-      if (!localStorage.getItem('sidebarLocked')) {
-        setTimeout(() => {
-          app.classList.add('sidebar-collapsed');
-        }, 300);
-      }
-    });
+  // Apply auto-hide sidebar
+  if (autoHideSidebar) {
+    document.body.classList.add('auto-hide-sidebar');
+    setupAutoHideSidebar();
   }
 }
 
@@ -132,6 +115,51 @@ function setupSidebarAutoHide() {
 function toggleSidebar() {
   const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
   localStorage.setItem('sidebarCollapsed', isCollapsed);
+  
+  // Toggle auto-hide feature
+  const hasAutoHide = document.body.classList.toggle('auto-hide-sidebar');
+  localStorage.setItem('autoHideSidebar', hasAutoHide);
+  
+  if (hasAutoHide) {
+    setupAutoHideSidebar();
+  }
+}
+
+// Setup auto-hide functionality for sidebar
+function setupAutoHideSidebar() {
+  const sidebar = document.querySelector('.app-nav');
+  const sidebarRect = sidebar.getBoundingClientRect();
+  const mouseProximityThreshold = 50; // Distance in pixels to trigger expansion
+  
+  // Debounce function to limit how often we handle mouse move
+  let timeoutId;
+  const debounce = (func, delay) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(func, delay);
+  };
+  
+  // Handle mouse movement to detect proximity to sidebar
+  document.addEventListener('mousemove', (e) => {
+    debounce(() => {
+      const mouseX = e.clientX;
+      const sidebarRightEdge = sidebarRect.width;
+      
+      // If mouse is within threshold of sidebar, expand it
+      if (mouseX <= sidebarRightEdge + mouseProximityThreshold) {
+        sidebar.classList.add('expanded');
+      } else {
+        sidebar.classList.remove('expanded');
+      }
+    }, 50);
+  });
+  
+  // Update sidebar rect position on window resize
+  window.addEventListener('resize', () => {
+    setTimeout(() => {
+      const newRect = sidebar.getBoundingClientRect();
+      Object.assign(sidebarRect, newRect);
+    }, 300);
+  });
 }
 
 // Toggle header visibility
@@ -624,7 +652,7 @@ function updateFamilyWidget(family) {
           <div class="member-status">${getMemberStatus(member)}</div>
         </div>
       </div>
-    `;
+   `;
   });
   
   container.innerHTML = html;

@@ -52,7 +52,6 @@ body {
   grid-template-columns: var(--nav-width) 1fr;
   height: 100vh;
   width: 100%;
-  transition: grid-template-columns var(--transition-speed);
 }
 
 /* Header Styles */
@@ -139,6 +138,9 @@ body {
   border-right: 1px solid var(--border-color);
   padding: 16px 0;
   overflow-y: auto;
+  transition: width var(--transition-speed), transform var(--transition-speed);
+  width: var(--nav-width);
+  position: relative;
 }
 
 .nav-item {
@@ -165,6 +167,43 @@ body {
   background-color: rgba(66, 133, 244, 0.12);
   color: var(--primary-color);
   font-weight: 500;
+}
+
+/* New auto-hide sidebar functionality */
+@media (min-width: 901px) {
+  .auto-hide-sidebar #app {
+    grid-template-columns: var(--nav-width-collapsed) 1fr;
+  }
+
+  .auto-hide-sidebar .app-nav {
+    width: var(--nav-width-collapsed);
+    z-index: 90;
+  }
+
+  .auto-hide-sidebar .app-nav:hover, 
+  .auto-hide-sidebar .app-nav.expanded {
+    width: var(--nav-width);
+  }
+
+  .auto-hide-sidebar .app-nav span {
+    opacity: 0;
+    transition: opacity var(--transition-speed);
+  }
+
+  .auto-hide-sidebar .app-nav:hover span,
+  .auto-hide-sidebar .app-nav.expanded span {
+    opacity: 1;
+  }
+
+  .auto-hide-sidebar .nav-item i {
+    margin-right: 0;
+    transition: margin-right var(--transition-speed);
+  }
+
+  .auto-hide-sidebar .app-nav:hover .nav-item i,
+  .auto-hide-sidebar .app-nav.expanded .nav-item i {
+    margin-right: 24px;
+  }
 }
 
 /* Main Content Styles */
@@ -2100,128 +2139,219 @@ input:checked + .toggle-slider:before {
   gap: 16px;
 }
 
-.form-row {
-  display: flex;
-  gap: 16px;
+.meal-or-divider {
+  position: relative;
+  text-align: center;
+  margin: 16px 0;
 }
 
-.form-group {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
+.meal-or-divider:before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: var(--border-color);
+  z-index: 1;
 }
 
-.form-group label {
-  margin-bottom: 8px;
-  font-weight: 500;
+.meal-or-divider span {
+  position: relative;
+  z-index: 2;
+  background-color: var(--background-light);
+  padding: 0 16px;
+  color: var(--text-secondary);
 }
 
-/* Task Details Modal */
-.task-details {
+.meal-type-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  margin-right: 8px;
+}
+
+.meal-type-badge.breakfast {
+  background-color: #FFF8E1;
+  color: #FF6F00;
+}
+
+.meal-type-badge.lunch {
+  background-color: #E1F5FE;
+  color: #0288D1;
+}
+
+.meal-type-badge.dinner {
+  background-color: #E8F5E9;
+  color: #2E7D32;
+}
+
+.meal-type-badge.snack {
+  background-color: #F3E5F5;
+  color: #7B1FA2;
+}
+
+.meal-details, .recipe-details-modal {
   padding: 8px 0;
 }
 
-.task-header {
-  padding: 16px;
+.meal-header, .recipe-header {
   margin-bottom: 16px;
-  position: relative;
-  display: flex;
-  align-items: center;
 }
 
-.task-header h3 {
-  margin: 0;
+.meal-header h3, .recipe-header h3 {
+  margin: 0 0 8px;
   font-weight: 500;
-  font-size: 18px;
-  margin-left: 40px;
 }
 
-.task-header.priority-high {
-  border-left: 4px solid var(--accent-color);
+.meal-meta, .recipe-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 16px;
 }
 
-.task-header.priority-medium {
-  border-left: 4px solid var(--warning-color);
+.meal-info, .recipe-ingredients, .recipe-instructions {
+  margin-bottom: 24px;
 }
 
-.task-header.priority-low {
-  border-left: 4px solid var(--secondary-color);
+.recipe-ingredients h4, .recipe-instructions h4 {
+  margin-bottom: 8px;
+  font-weight: 500;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border-color);
 }
 
-.task-status-container {
-  margin-right: 12px;
+.recipe-ingredients ul {
+  list-style-type: disc;
+  padding-left: 20px;
+}
+
+.recipe-ingredients li {
+  margin-bottom: 4px;
+}
+
+.grocery-list-result {
+  padding: 8px 0;
+}
+
+.grocery-header {
+  margin-bottom: 16px;
+}
+
+.grocery-header h3 {
+  margin: 0 0 8px;
+}
+
+.grocery-items-list {
+  list-style-type: none;
+  padding: 0;
+}
+
+.grocery-items-list li {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.checkbox-container {
   display: flex;
   align-items: center;
+  cursor: pointer;
 }
 
-.status-button {
-  border-radius: 50%;
-  padding: 4px;
+.grocery-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 24px;
+}
+
+@media (max-width: 900px) {
+  .meal-planner {
+    grid-template-columns: 1fr;
+  }
+}
+
+.viewing-as-member-banner {
+  background-color: rgba(66, 133, 244, 0.1);
+  border-left: 4px solid var(--primary-color);
+  padding: 8px 16px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  border-radius: 4px;
+}
+
+.viewing-as-member-banner i {
+  margin-right: 8px;
+  color: var(--primary-color);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.user-switcher-container {
+  padding: 16px 0;
+}
+
+.user-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.user-option {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border-radius: 8px;
+  cursor: pointer;
   transition: background-color 0.2s;
 }
 
-.progress-button {
-  color: #4285F4;
-  border: 1px solid #4285F4;
+.user-option:hover {
+  background-color: rgba(66, 133, 244, 0.08);
 }
 
-.progress-button:hover {
-  background-color: rgba(66, 133, 244, 0.1);
-  transform: scale(1.1);
+.user-option.active {
+  background-color: rgba(66, 133, 244, 0.12);
+  border: 1px solid var(--primary-color);
 }
 
-.complete-button {
-  color: #34A853;
-  border: 1px solid #34A853;
-}
-
-.complete-button:hover {
-  background-color: rgba(52, 168, 83, 0.1);
-  transform: scale(1.1);
-}
-
-.completed-status {
-  color: white;
-  background-color: var(--secondary-color);
-  border: 2px solid var(--secondary-color);
-}
-
-/* Improved status buttons */
-.status-button {
-  width: 36px;
-  height: 36px;
+.user-option .user-avatar {
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   display: flex;
-  align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
-  background-color: var(--background-off);
-}
-
-.progress-button {
-  color: var(--primary-color);
-  border: 2px solid var(--primary-color);
-}
-
-.progress-button:hover {
-  background-color: rgba(66, 133, 244, 0.1);
-  transform: scale(1.1);
-}
-
-.complete-button {
-  color: var(--secondary-color);
-  border: 2px solid var(--secondary-color);
-}
-
-.complete-button:hover {
-  background-color: rgba(52, 168, 83, 0.1);
-  transform: scale(1.1);
-}
-
-.completed-status {
+  align-items: center;
   color: white;
-  background-color: var(--secondary-color);
-  border: 2px solid var(--secondary-color);
+  font-size: 18px;
+  font-weight: 500;
+  margin-right: 16px;
+  flex-shrink: 0;
 }
 
-/* Auto-hide
+.user-option .user-info {
+  flex-grow: 1;
+}
+
+.user-option .user-name {
+  font-weight: 500;
+  font-size: 16px;
+}
+
+.user-option .user-role {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.no-family-message {
+  color: var(--text-secondary);
+  font-style: italic;
+  margin-top: 16px;
+}

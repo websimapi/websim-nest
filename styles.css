@@ -310,7 +310,24 @@ h1 {
 
 .calendar-day.today {
   background-color: rgba(66, 133, 244, 0.05);
+}
+
+.today .day-number {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.calendar-day.selected {
   border: 2px solid var(--primary-color);
+  background-color: rgba(66, 133, 244, 0.05);
+}
+
+.calendar-day.today.selected {
+  border: 2px solid var(--accent-color);
+}
+
+.calendar-day:hover:not(.empty):not(.selected) {
+  background-color: rgba(66, 133, 244, 0.03);
 }
 
 .day-number {
@@ -322,11 +339,6 @@ h1 {
   text-align: center;
   line-height: 25px;
   border-radius: 50%;
-}
-
-.today .day-number {
-  background-color: var(--primary-color);
-  color: white;
 }
 
 .day-events {
@@ -384,19 +396,6 @@ h1 {
 
 .event.dragging {
   opacity: 0.5;
-}
-
-.calendar-day.selected {
-  border: 2px solid var(--primary-color);
-  background-color: rgba(66, 133, 244, 0.05);
-}
-
-.calendar-day.today.selected {
-  border: 2px solid var(--accent-color);
-}
-
-.calendar-day:hover:not(.empty):not(.selected) {
-  background-color: rgba(66, 133, 244, 0.03);
 }
 
 /* Week View Styles */

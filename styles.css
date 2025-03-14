@@ -323,7 +323,7 @@ h1 {
 }
 
 .calendar-day.today.selected {
-  border: 2px solid var(--accent-color);
+  border: 2px solid var(--primary-color);
 }
 
 .calendar-day:hover:not(.empty):not(.selected) {

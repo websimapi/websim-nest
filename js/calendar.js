@@ -219,6 +219,11 @@ function renderCalendar() {
   // Clear previous content
   container.innerHTML = '';
   
+  // Set today as default selected date if none is already selected
+  if (!calendarState.selectedDate) {
+    calendarState.selectedDate = new Date();
+  }
+  
   // Render based on view mode
   switch (calendarState.viewMode) {
     case 'month':

@@ -56,11 +56,6 @@ function showNotification(message, type = 'info') {
   // Add to container
   container.appendChild(notification);
   
-  // Animation timing
-  setTimeout(() => {
-    notification.classList.add('show');
-  }, 10);
-  
   // Set up auto-dismiss
   const dismissTimeout = setTimeout(() => {
     if (notification.parentNode) {

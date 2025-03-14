@@ -119,7 +119,7 @@ function initCalendarView() {
   document.getElementById('prev-month').addEventListener('click', navigateToPreviousMonth);
   document.getElementById('next-month').addEventListener('click', navigateToNextMonth);
   document.getElementById('sync-calendar').addEventListener('click', handleManualSync);
-  document.getElementById('add-event').addEventListener('click', showAddEventModal);
+  document.getElementById('add-event').addEventListener('click', () => showAddEventModal(calendarState.selectedDate));
   
   // Set up view option buttons
   document.querySelectorAll('.view-options button').forEach(button => {
@@ -1012,12 +1012,10 @@ function showEventDetails(event) {
 // Show modal to add a new event
 function showAddEventModal(date) {
   // Use provided date, selected date, or current date
-  const selectedDate = date || calendarState.selectedDate || calendarState.currentDate;
+  const selectedDate = date || calendarState.selectedDate || new Date();
   
   // Format date for form
-  const dateStr = selectedDate instanceof Date ? 
-    selectedDate.toISOString().split('T')[0] : 
-    new Date().toISOString().split('T')[0];
+  const dateStr = selectedDate.toISOString().split('T')[0];
   
   // Set default times (current time rounded to nearest half hour)
   const now = new Date();

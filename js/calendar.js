@@ -383,7 +383,10 @@ function renderMonthView(container) {
     });
     
     // Double click to add event on this date
-    dayCell.addEventListener('dblclick', () => showAddEventModal(date));
+    dayCell.addEventListener('dblclick', () => {
+      const clickedDate = new Date(year, month, day);
+      showAddEventModal(clickedDate);
+    });
     
     // Add to calendar grid
     calendarGrid.appendChild(dayCell);
@@ -983,10 +986,12 @@ function showEventDetails(event) {
 // Show modal to add a new event
 function showAddEventModal(date) {
   // Use provided date or current date
-  const selectedDate = date || calendarState.currentDate;
+  const selectedDate = date instanceof Date ? date : 
+                       typeof date === 'string' ? new Date(date) : 
+                       calendarState.currentDate;
   
   // Format date for form
-  const dateStr = selectedDate instanceof Date ? selectedDate.toISOString().split('T')[0] : selectedDate;
+  const dateStr = selectedDate.toISOString().split('T')[0];
   
   // Set default times (current time rounded to nearest half hour)
   const now = new Date();

@@ -102,37 +102,6 @@ function initNavigationControls() {
     document.body.classList.add('header-hidden');
     toggleHeaderBtn.querySelector('i').textContent = 'expand_more';
   }
-  
-  // Set up auto-hide behavior for desktop
-  setupSidebarAutoHide();
-}
-
-// Add this new function for sidebar auto-hide
-function setupSidebarAutoHide() {
-  const app = document.getElementById('app');
-  const nav = document.querySelector('.app-nav');
-  
-  // Add hover listeners if not on mobile
-  if (window.innerWidth > 900) {
-    nav.addEventListener('mouseenter', () => {
-      app.classList.remove('sidebar-collapsed');
-      app.classList.remove('sidebar-hidden');
-    });
-    
-    nav.addEventListener('mouseleave', () => {
-      if (!localStorage.getItem('sidebarLocked')) {
-        setTimeout(() => {
-          app.classList.add('sidebar-collapsed');
-          // After collapsing, hide it completely if in collapsed state
-          setTimeout(() => {
-            if (app.classList.contains('sidebar-collapsed')) {
-              app.classList.add('sidebar-hidden');
-            }
-          }, 300);
-        }, 300);
-      }
-    });
-  }
 }
 
 // Toggle sidebar visibility

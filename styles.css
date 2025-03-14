@@ -2120,6 +2120,8 @@ body.sidebar-collapsed .app-nav .nav-item {
 /* Apply header hidden state */
 body.header-hidden .app-header {
   transform: translateY(-100%);
+  position: absolute;
+  visibility: hidden;
 }
 
 body.header-hidden #app {

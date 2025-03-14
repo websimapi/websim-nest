@@ -986,7 +986,7 @@ function showAddEventModal(date) {
   const selectedDate = date || calendarState.currentDate;
   
   // Format date for form
-  const dateStr = selectedDate instanceof Date ? selectedDate.toISOString().split('T')[0] : selectedDate;
+  const dateStr = selectedDate.toISOString().split('T')[0];
   
   // Set default times (current time rounded to nearest half hour)
   const now = new Date();
@@ -1026,6 +1026,10 @@ function showAddEventModal(date) {
     `;
   }
   
+  // Determine if all-day should be selected by default
+  // If a date object was passed, it's a timed event, otherwise it's all-day
+  const isAllDay = !(selectedDate instanceof Date);
+  
   // Build HTML content
   const content = `
     <form id="add-event-form" class="event-form">
@@ -1040,12 +1044,12 @@ function showAddEventModal(date) {
       <div class="event-type-toggle">
         <label>Event Type:</label>
         <div class="toggle-container">
-          <label for="event-all-day" class="toggle-option ${selectedDate instanceof Date ? '' : 'active'}">
-            <input type="radio" id="event-timed" name="event-type" value="timed" ${selectedDate instanceof Date ? 'checked' : ''}>
+          <label for="event-timed" class="toggle-option ${!isAllDay ? 'active' : ''}">
+            <input type="radio" id="event-timed" name="event-type" value="timed" ${!isAllDay ? 'checked' : ''}>
             <span>Timed</span>
           </label>
-          <label for="event-all-day" class="toggle-option ${selectedDate instanceof Date ? '' : 'active'}">
-            <input type="radio" id="event-all-day" name="event-type" value="allday" ${selectedDate instanceof Date ? '' : 'checked'}>
+          <label for="event-all-day" class="toggle-option ${isAllDay ? 'active' : ''}">
+            <input type="radio" id="event-all-day" name="event-type" value="allday" ${isAllDay ? 'checked' : ''}>
             <span>All Day</span>
           </label>
         </div>
@@ -1060,7 +1064,7 @@ function showAddEventModal(date) {
           </div>
         </div>
         
-        <div class="form-group start-time">
+        <div class="form-group start-time" ${isAllDay ? 'style="display: none"' : ''}>
           <label for="event-start-time">Start Time *</label>
           <div class="input-with-icon">
             <i class="material-icons">access_time</i>
@@ -1068,7 +1072,7 @@ function showAddEventModal(date) {
           </div>
         </div>
         
-        <div class="form-group end-time">
+        <div class="form-group end-time" ${isAllDay ? 'style="display: none"' : ''}>
           <label for="event-end-time">End Time *</label>
           <div class="input-with-icon">
             <i class="material-icons">access_time</i>
@@ -1115,31 +1119,30 @@ function showAddEventModal(date) {
   
   showModal('Add Event', content, handleAddEvent);
   
-  // Handle event type toggle (timed vs all-day)
-  document.getElementById('event-all-day').addEventListener('change', function() {
-    const timeInputs = document.querySelectorAll('.time-inputs .form-group.start-time, .time-inputs .form-group.end-time');
-    if (this.checked) {
-      timeInputs.forEach(input => {
-        input.style.display = 'none';
+  // Update toggle option styling when radio changes
+  document.querySelectorAll('.toggle-option input').forEach(radio => {
+    radio.addEventListener('change', function() {
+      // Remove active class from all options
+      document.querySelectorAll('.toggle-option').forEach(option => {
+        option.classList.remove('active');
       });
-    }
-  });
-  
-  document.getElementById('event-timed').addEventListener('change', function() {
-    const timeInputs = document.querySelectorAll('.time-inputs .form-group.start-time, .time-inputs .form-group.end-time');
-    if (this.checked) {
-      timeInputs.forEach(input => {
-        input.style.display = 'block';
-      });
-    }
-  });
-  
-  // Set initial display state for time inputs
-  if (!selectedDate instanceof Date) {
-    document.querySelectorAll('.time-inputs .form-group.start-time, .time-inputs .form-group.end-time').forEach(input => {
-      input.style.display = 'none';
+      
+      // Add active class to selected option
+      this.closest('.toggle-option').classList.add('active');
+      
+      // Show/hide time inputs based on selection
+      const timeInputs = document.querySelectorAll('.time-inputs .form-group.start-time, .time-inputs .form-group.end-time');
+      if (this.id === 'event-all-day') {
+        timeInputs.forEach(input => {
+          input.style.display = 'none';
+        });
+      } else {
+        timeInputs.forEach(input => {
+          input.style.display = 'block';
+        });
+      }
     });
-  }
+  });
   
   // Handle color selector
   document.querySelectorAll('.color-option').forEach(option => {

@@ -866,7 +866,7 @@ h1 {
   background-color: var(--background-light);
   border-radius: var(--border-radius);
   width: 90%;
-  max-width: 600px;
+  max-width: 700px;
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 24px 38px 3px rgba(0, 0, 0, 0.14),
@@ -1789,6 +1789,7 @@ input:checked + .toggle-slider:before {
   gap: 16px;
   max-width: 100%;
   margin: 0 auto;
+  width: 100%;
 }
 
 .input-with-icon {
@@ -1847,6 +1848,7 @@ input:checked + .toggle-slider:before {
   cursor: pointer;
   position: relative;
   user-select: none;
+  transition: background-color 0.2s;
 }
 
 .toggle-option input {
@@ -2097,7 +2099,7 @@ button:disabled {
 }
 
 .toggle-header-btn i {
-  transition: transform 0.3s ease;
+  transition: transform 0.3s;
 }
 
 /* Apply sidebar collapsed state */

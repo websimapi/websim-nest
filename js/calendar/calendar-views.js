@@ -208,7 +208,6 @@ function renderWeekView(container) {
   for (let hour = 0; hour < 24; hour++) {
     const hourLabel = document.createElement('div');
     hourLabel.className = 'hour-label';
-    hourLabel.style.height = '60px';
     const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
     const amPm = hour < 12 ? 'AM' : 'PM';
     hourLabel.textContent = `${displayHour} ${amPm}`;
@@ -400,12 +399,13 @@ function renderDayView(container) {
   const timeGutter = document.createElement('div');
   timeGutter.className = 'time-gutter';
   
-  // Add hour labels (5 AM to 9 PM)
-  for (let hour = 5; hour <= 21; hour++) {
+  // Add hour labels (1 AM to 12 AM) - updated to show all 24 hours
+  for (let hour = 0; hour < 24; hour++) {
     const hourLabel = document.createElement('div');
     hourLabel.className = 'hour-label';
-    hourLabel.style.height = '60px';
-    hourLabel.textContent = `${hour % 12 === 0 ? 12 : hour % 12} ${hour < 12 ? 'AM' : 'PM'}`;
+    const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+    const amPm = hour < 12 ? 'AM' : 'PM';
+    hourLabel.textContent = `${displayHour} ${amPm}`;
     timeGutter.appendChild(hourLabel);
   }
   
@@ -415,11 +415,20 @@ function renderDayView(container) {
   const eventsContainer = document.createElement('div');
   eventsContainer.className = 'day-events-container';
   
-  // Create hour grid
-  for (let hour = 5; hour <= 21; hour++) {
+  // Create hour grid for all 24 hours
+  for (let hour = 0; hour < 24; hour++) {
     const hourCell = document.createElement('div');
     hourCell.className = 'hour-cell';
     hourCell.dataset.hour = hour;
+    
+    // Add different styling for working hours and off-hours
+    if (hour >= 9 && hour < 17) {
+      hourCell.classList.add('working-hours');
+    } else if (hour >= 17 && hour < 21) {
+      hourCell.classList.add('evening-hours');
+    } else {
+      hourCell.classList.add('night-hours');
+    }
     
     // Add half-hour divider
     const halfHourDivider = document.createElement('div');

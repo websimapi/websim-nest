@@ -401,12 +401,14 @@ h1 {
 /* Week View Styles */
 .calendar-week {
   display: flex;
-  height: 700px;
+  height: 1440px; /* 24h x 60px per hour */
   border-top: 1px solid var(--border-color);
   position: relative;
   overflow-x: auto;
   overflow-y: auto;
   min-height: 700px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
 }
 
 .time-gutter {
@@ -414,6 +416,9 @@ h1 {
   flex-shrink: 0;
   background-color: var(--background-off);
   border-right: 1px solid var(--border-color);
+  position: sticky;
+  left: 0;
+  z-index: 5;
 }
 
 .hour-label {
@@ -449,6 +454,8 @@ h1 {
   border-bottom: 1px solid var(--border-color);
   background-color: var(--background-light);
   z-index: 5;
+  position: sticky;
+  top: 0;
 }
 
 .day-header .weekday {
@@ -471,6 +478,27 @@ h1 {
   height: 60px;
   border-bottom: 1px solid var(--border-color);
   position: relative;
+}
+
+.hour-cell.working-hours {
+  background-color: rgba(255, 255, 255, 0.7);
+}
+
+.hour-cell.evening-hours {
+  background-color: rgba(245, 245, 245, 0.7);
+}
+
+.hour-cell.night-hours {
+  background-color: rgba(235, 235, 235, 0.7);
+}
+
+.half-hour-divider {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background-color: rgba(0, 0, 0, 0.05);
 }
 
 .week-event {

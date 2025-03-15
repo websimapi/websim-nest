@@ -584,14 +584,12 @@ function renderWeekView(container) {
           allDayContainer.appendChild(eventElement);
         });
         
-        // First append eventsContainer to dayColumn
-        dayColumn.appendChild(eventsContainer);
-        
-        // Then insert allDayContainer before eventsContainer
-        dayColumn.insertBefore(allDayContainer, eventsContainer);
-      } else {
-        // If no all-day events, just append eventsContainer
-        dayColumn.appendChild(eventsContainer);
+        // Fix: Check if eventsContainer exists in the dayColumn before inserting
+        if (dayColumn.contains(eventsContainer)) {
+          dayColumn.insertBefore(allDayContainer, eventsContainer);
+        } else {
+          dayColumn.appendChild(allDayContainer);
+        }
       }
     }
     

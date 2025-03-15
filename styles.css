@@ -516,8 +516,16 @@ h1 {
 }
 
 .week-event .event-time {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.week-event .event-title {
   font-weight: 500;
   margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .week-event:hover {

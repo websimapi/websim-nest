@@ -517,8 +517,8 @@ function renderDayView(container) {
       const formattedEndTime = endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       
       eventElement.innerHTML = `
-        <div class="event-time">${formattedStartTime} - ${formattedEndTime}</div>
         <div class="event-title">${event.summary}</div>
+        <div class="event-time">${formattedStartTime} - ${formattedEndTime}</div>
         <div class="event-location">${event.location || ''}</div>
       `;
       

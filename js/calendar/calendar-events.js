@@ -414,85 +414,153 @@ function showEditEventModal(event) {
     calendarOptions += `<option value="${calendar.id}" ${selected}>${calendar.summary}</option>`;
   });
   
-  // Build color selection options
+  // Build color selection options with visual color swatches
   let colorOptions = '';
-  for (let i = 1; i <= 11; i++) {
-    const color = getColorForId(i.toString());
-    const selected = i.toString() === event.colorId ? 'selected' : '';
+  const colorMap = {
+    '1': '#7986CB', // Lavender
+    '2': '#33B679', // Sage
+    '3': '#8E24AA', // Grape
+    '4': '#E67C73', // Flamingo
+    '5': '#F6BF26', // Banana
+    '6': '#F4511E', // Tangerine
+    '7': '#039BE5', // Peacock
+    '8': '#616161', // Graphite
+    '9': '#3F51B5', // Blueberry
+    '10': '#0B8043', // Basil
+    '11': '#D50000', // Tomato
+  };
+  
+  for (const [id, color] of Object.entries(colorMap)) {
     colorOptions += `
-      <option value="${i}" ${selected} style="background-color: ${color}; color: white;">
-        Color ${i}
-      </option>
+      <div class="color-option ${id === event.colorId ? 'selected' : ''}" data-color-id="${id}">
+        <div class="color-swatch" style="background-color: ${color}"></div>
+      </div>
     `;
   }
   
-  // Build HTML content
+  // Create modal content
   const content = `
     <form id="edit-event-form" class="event-form" data-event-id="${event.id}">
       <div class="form-group">
         <label for="event-title">Event Title *</label>
-        <input type="text" id="event-title" required placeholder="Enter event title" 
-          value="${event.summary || ''}">
+        <div class="input-with-icon">
+          <i class="material-icons">event</i>
+          <input type="text" id="event-title" required placeholder="Enter event title" value="${event.summary || ''}">
+        </div>
       </div>
       
-      <div class="form-group">
-        <label for="event-all-day">All Day Event</label>
-        <input type="checkbox" id="event-all-day" ${isAllDay ? 'checked' : ''}>
+      <div class="event-type-toggle">
+        <label>Event Type:</label>
+        <div class="toggle-container">
+          <label for="event-timed" class="toggle-option ${!isAllDay ? 'active' : ''}">
+            <input type="radio" id="event-timed" name="event-type" value="timed" ${!isAllDay ? 'checked' : ''}>
+            <span>Timed</span>
+          </label>
+          <label for="event-all-day" class="toggle-option ${isAllDay ? 'active' : ''}">
+            <input type="radio" id="event-all-day" name="event-type" value="allday" ${isAllDay ? 'checked' : ''}>
+            <span>All Day</span>
+          </label>
+        </div>
       </div>
       
       <div class="form-row time-inputs">
         <div class="form-group">
           <label for="event-date">Date *</label>
-          <input type="date" id="event-date" required value="${dateStr}">
+          <div class="input-with-icon">
+            <i class="material-icons">calendar_today</i>
+            <input type="date" id="event-date" required value="${dateStr}">
+          </div>
         </div>
         
-        <div class="form-group start-time" style="display: ${isAllDay ? 'none' : 'block'}">
+        <div class="form-group start-time" ${isAllDay ? 'style="display: none"' : ''}>
           <label for="event-start-time">Start Time *</label>
-          <input type="time" id="event-start-time" required value="${startTimeStr}">
+          <div class="input-with-icon">
+            <i class="material-icons">access_time</i>
+            <input type="time" id="event-start-time" required value="${startTimeStr}">
+          </div>
         </div>
         
-        <div class="form-group end-time" style="display: ${isAllDay ? 'none' : 'block'}">
+        <div class="form-group end-time" ${isAllDay ? 'style="display: none"' : ''}>
           <label for="event-end-time">End Time *</label>
-          <input type="time" id="event-end-time" required value="${endTimeStr}">
+          <div class="input-with-icon">
+            <i class="material-icons">access_time</i>
+            <input type="time" id="event-end-time" required value="${endTimeStr}">
+          </div>
         </div>
       </div>
       
       <div class="form-group">
         <label for="event-location">Location</label>
-        <input type="text" id="event-location" placeholder="Add location" 
-          value="${event.location || ''}">
+        <div class="input-with-icon">
+          <i class="material-icons">place</i>
+          <input type="text" id="event-location" placeholder="Add location" value="${event.location || ''}">
+        </div>
       </div>
       
-      <div class="form-row">
-        <div class="form-group">
-          <label for="event-calendar">Calendar</label>
+      <div class="form-group">
+        <label for="event-calendar">Calendar</label>
+        <div class="input-with-icon">
+          <i class="material-icons">event_note</i>
           <select id="event-calendar">
             ${calendarOptions}
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label for="event-color">Color</label>
-          <select id="event-color">
-            ${colorOptions}
           </select>
         </div>
       </div>
       
       <div class="form-group">
+        <label>Color</label>
+        <div class="color-selector">
+          ${colorOptions}
+          <input type="hidden" id="event-color" value="${event.colorId || '1'}">
+        </div>
+      </div>
+      
+      <div class="form-group">
         <label for="event-description">Description</label>
-        <textarea id="event-description" rows="3" placeholder="Add description">${event.description || ''}</textarea>
+        <div class="input-with-icon textarea-icon">
+          <i class="material-icons">notes</i>
+          <textarea id="event-description" rows="3" placeholder="Add description">${event.description || ''}</textarea>
+        </div>
       </div>
     </form>
   `;
   
   showModal('Edit Event', content, () => handleEditEvent(event));
   
-  // Handle all-day checkbox
-  document.getElementById('event-all-day').addEventListener('change', function() {
-    const timeInputs = document.querySelectorAll('.time-inputs .form-group.start-time, .time-inputs .form-group.end-time');
-    timeInputs.forEach(input => {
-      input.style.display = this.checked ? 'none' : 'block';
+  // Update toggle option styling when radio changes
+  document.querySelectorAll('.toggle-option input').forEach(radio => {
+    radio.addEventListener('change', function() {
+      // Remove active class from all options
+      document.querySelectorAll('.toggle-option').forEach(option => {
+        option.classList.remove('active');
+      });
+      
+      // Add active class to selected option
+      this.closest('.toggle-option').classList.add('active');
+      
+      // Show/hide time inputs based on selection
+      const timeInputs = document.querySelectorAll('.time-inputs .form-group.start-time, .time-inputs .form-group.end-time');
+      if (this.id === 'event-all-day') {
+        timeInputs.forEach(input => {
+          input.style.display = 'none';
+        });
+      } else {
+        timeInputs.forEach(input => {
+          input.style.display = 'block';
+        });
+      }
+    });
+  });
+  
+  // Handle color selector
+  document.querySelectorAll('.color-option').forEach(option => {
+    option.addEventListener('click', () => {
+      // Remove selected class from all options
+      document.querySelectorAll('.color-option').forEach(o => o.classList.remove('selected'));
+      // Add selected class to clicked option
+      option.classList.add('selected');
+      // Update hidden input value
+      document.getElementById('event-color').value = option.dataset.colorId;
     });
   });
 }

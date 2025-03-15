@@ -405,7 +405,7 @@ h1 {
   border-top: 1px solid var(--border-color);
   position: relative;
   overflow-x: auto;
-  overflow-y: auto;
+  overflow-y: visible; /* Changed from 'auto' to 'visible' to work with main page scroll */
   min-height: 700px;
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
@@ -554,31 +554,7 @@ h1 {
 
 /* Week View Scroll Controls */
 .week-scroll-controls {
-  position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  z-index: 100;
-}
-
-.week-scroll-controls .btn {
-  background-color: var(--background-light);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-  opacity: 0.7;
-  transition: opacity 0.3s ease, transform 0.3s ease;
-}
-
-.week-scroll-controls .btn:hover {
-  opacity: 1;
-  transform: scale(1.1);
-}
-
-/* Add smooth scrolling to all elements */
-html {
-  scroll-behavior: smooth;
+  display: none; /* Hide the controls instead of removing entirely */
 }
 
 /* Day View Styles */

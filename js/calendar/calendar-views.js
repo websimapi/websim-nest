@@ -200,15 +200,6 @@ function renderWeekView(container) {
   const calendarWeek = document.createElement('div');
   calendarWeek.className = 'calendar-week';
 
-  // Create nav controls for scrolling
-  const scrollControls = document.createElement('div');
-  scrollControls.className = 'week-scroll-controls';
-  scrollControls.innerHTML = `
-    <button class="btn btn-icon scroll-up" title="Scroll up"><i class="material-icons">keyboard_arrow_up</i></button>
-    <button class="btn btn-icon scroll-down" title="Scroll down"><i class="material-icons">keyboard_arrow_down</i></button>
-  `;
-  container.appendChild(scrollControls);
-  
   // Create time gutter
   const timeGutter = document.createElement('div');
   timeGutter.className = 'time-gutter';
@@ -372,31 +363,13 @@ function renderWeekView(container) {
   
   container.appendChild(calendarWeek);
   
-  // Add scroll controls event listeners
-  document.querySelector('.scroll-up').addEventListener('click', () => {
-    calendarWeek.scrollBy({
-      top: -200,
-      behavior: 'smooth'
-    });
-  });
-  
-  document.querySelector('.scroll-down').addEventListener('click', () => {
-    calendarWeek.scrollBy({
-      top: 200,
-      behavior: 'smooth'
-    });
-  });
-  
-  // Add wheel event listener for smooth scrolling
+  // Make wheel event passive for better scrolling performance
   calendarWeek.addEventListener('wheel', (e) => {
+    // Remove the preventDefault to allow natural scrolling
     if (e.deltaY !== 0) {
-      e.preventDefault();
-      calendarWeek.scrollBy({
-        top: e.deltaY < 0 ? -100 : 100,
-        behavior: 'smooth'
-      });
+      // Let the browser handle the scrolling naturally
     }
-  }, { passive: false });
+  }, { passive: true });
 }
 
 // Render day view calendar

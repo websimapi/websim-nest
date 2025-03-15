@@ -12,3 +12,4 @@ document.write('<script src="js/calendar/calendar-events.js"></script>');
 // Import the calendar drag and drop module
 document.write('<script src="js/calendar/calendar-drag-drop.js"></script>');
 
+

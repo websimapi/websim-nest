@@ -584,12 +584,8 @@ function renderWeekView(container) {
           allDayContainer.appendChild(eventElement);
         });
         
-        // Fix: Check if eventsContainer exists in the dayColumn before inserting
-        if (dayColumn.contains(eventsContainer)) {
-          dayColumn.insertBefore(allDayContainer, eventsContainer);
-        } else {
-          dayColumn.appendChild(allDayContainer);
-        }
+        // Fix: Append the allDayContainer to dayColumn before the eventsContainer is appended
+        dayColumn.appendChild(allDayContainer);
       }
     }
     

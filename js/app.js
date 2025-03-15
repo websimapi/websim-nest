@@ -722,5 +722,33 @@ function getColorForId(colorId) {
   return colors[colorId] || '#4285F4'; // Default to blue
 }
 
+// Initialize the calendar view
+function initCalendarView() {
+  console.log('Initializing calendar view');
+  
+  // Set up event listeners for calendar controls
+  document.getElementById('prev-month').addEventListener('click', navigateToPreviousMonth);
+  document.getElementById('next-month').addEventListener('click', navigateToNextMonth);
+  document.getElementById('sync-calendar').addEventListener('click', handleManualSync);
+  document.getElementById('add-event').addEventListener('click', () => showAddEventModal(calendarState.selectedDate));
+  
+  // Set up view option buttons
+  document.querySelectorAll('.view-options button').forEach(button => {
+    button.addEventListener('click', handleViewChange);
+  });
+  
+  // Update calendar header with current month/year
+  updateCalendarHeader();
+  
+  // Ensure event cache is refreshed before rendering
+  refreshEventCache().then(() => {
+    // Render the calendar with events
+    renderCalendar();
+  }).catch(error => {
+    console.error('Error refreshing calendar events:', error);
+    renderCalendar(); // Still render even if there's an error
+  });
+}
+
 // Initialize the application when DOM is fully loaded
 document.addEventListener('DOMContentLoaded', initApp);

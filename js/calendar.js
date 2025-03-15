@@ -1244,6 +1244,9 @@ async function handleAddEvent() {
     // Save to local database first
     await storeEvent(event);
     
+    // Update the cache with the new event
+    await refreshEventCache();
+    
     // Try to sync with Google Calendar if online
     if (appState.isOnline) {
       await syncEventToGoogle(event);
@@ -1442,6 +1445,9 @@ async function handleEditEvent(originalEvent) {
     // Update local database
     await updateEvent(updatedEvent);
     
+    // Update the cache with the updated event
+    await refreshEventCache();
+    
     // Try to sync with Google Calendar if online
     if (appState.isOnline) {
       await syncEventUpdateToGoogle(updatedEvent);
@@ -1487,6 +1493,9 @@ async function handleDeleteEvent(event) {
   try {
     // Delete from local database
     await deleteEvent(event.id);
+    
+    // Update the cache to remove the deleted event
+    await refreshEventCache();
     
     // Try to sync with Google Calendar if online
     if (appState.isOnline) {
@@ -1749,6 +1758,12 @@ function getEventsForDateRange(startDate, endDate, eventsArray = null) {
 // Refresh the calendar view
 function refreshCalendarView() {
   if (appState.currentView === 'calendar') {
-    renderCalendar();
+    // Update the event cache before rendering
+    refreshEventCache().then(() => {
+      renderCalendar();
+    }).catch(error => {
+      console.error('Error refreshing events:', error);
+      renderCalendar(); // Still render even if there's an error
+    });
   }
 }

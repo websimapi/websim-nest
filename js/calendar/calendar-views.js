@@ -309,8 +309,8 @@ function renderWeekView(container) {
         const startHour = startTime.getHours() + startTime.getMinutes() / 60;
         const endHour = endTime.getHours() + endTime.getMinutes() / 60;
         
-        // Position based on actual hour (0-23 scale), subtract 1 to fix positioning
-        const top = (startHour - 1) * 60; // 60px per hour, adjusted up 1 hour
+        // Position based on actual hour (0-23 scale)
+        const top = startHour * 60; // 60px per hour
         const height = Math.max(30, (endHour - startHour) * 60); // Min height of 30px
         
         eventElement.style.top = `${top}px`;

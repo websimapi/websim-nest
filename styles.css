@@ -428,6 +428,7 @@ h1 {
   color: var(--text-secondary);
   border-bottom: 1px solid var(--border-color);
   position: relative;
+  line-height: 42px; /* Center the text vertically in the label */
 }
 
 .day-column {
@@ -478,6 +479,11 @@ h1 {
   height: 60px;
   border-bottom: 1px solid var(--border-color);
   position: relative;
+  margin-top: -1px; /* Adjust to align with hour labels */
+}
+
+.hour-cell:first-child {
+  margin-top: 0; /* No adjustment for first cell */
 }
 
 .hour-cell.working-hours {

@@ -401,9 +401,60 @@ h1 {
 /* Week View Styles */
 .calendar-week {
   display: flex;
+  flex-direction: column;
   height: 700px;
-  border-top: 1px solid var(--border-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  background-color: var(--background-light);
+}
+
+.week-all-day-section {
+  display: flex;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--background-off);
+  min-height: 50px;
+  max-height: 100px;
+  overflow-y: auto;
+}
+
+.all-day-label {
+  width: 60px;
+  flex-shrink: 0;
+  padding: 8px;
+  text-align: right;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  border-right: 1px solid var(--border-color);
+}
+
+.all-day-column {
+  flex: 1;
+  min-width: 100px;
+  border-right: 1px solid var(--border-color);
+  padding: 2px;
+  overflow: hidden;
   position: relative;
+}
+
+.all-day-column:last-child {
+  border-right: none;
+}
+
+.all-day-column.today {
+  background-color: rgba(66, 133, 244, 0.05);
+}
+
+.all-day-column.selected {
+  background-color: rgba(66, 133, 244, 0.1);
+  box-shadow: inset 0 0 0 2px var(--primary-color);
+}
+
+.time-grid-container {
+  display: flex;
+  flex: 1;
+  overflow-y: auto;
 }
 
 .time-gutter {
@@ -441,6 +492,11 @@ h1 {
   background-color: rgba(66, 133, 244, 0.05);
 }
 
+.day-column.selected {
+  background-color: rgba(66, 133, 244, 0.1);
+  box-shadow: inset 0 0 0 2px var(--primary-color);
+}
+
 .day-header {
   padding: 8px;
   text-align: center;
@@ -450,6 +506,7 @@ h1 {
 }
 
 .day-header .weekday {
+  font-size: 12px;
   font-weight: 500;
   color: var(--text-secondary);
 }
@@ -457,6 +514,18 @@ h1 {
 .day-header .date {
   font-size: 18px;
   font-weight: 500;
+}
+
+.day-header .date.today {
+  color: var(--primary-color);
+  background-color: rgba(66, 133, 244, 0.1);
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
 }
 
 .day-events-container {
@@ -482,44 +551,72 @@ h1 {
 
 .week-event {
   position: absolute;
-  left: 4px;
-  right: 4px;
   background-color: #E1F5FE;
   border-left: 4px solid var(--primary-color);
-  border-radius: 3px;
+  border-radius: 4px;
   padding: 4px 8px;
   font-size: 12px;
   overflow: hidden;
   z-index: 10;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.1s;
+}
+
+.week-event:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transform: translateY(-1px);
 }
 
 .week-event .event-time {
   font-weight: 500;
   margin-bottom: 4px;
+  font-size: 11px;
 }
 
-.week-event:hover {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.all-day-container {
-  padding: 2px 4px;
-  background-color: rgba(0, 0, 0, 0.02);
-  border-bottom: 1px solid var(--border-color);
-  min-height: 24px;
+.week-event .event-title {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .all-day-event {
   margin: 2px 0;
-  padding: 2px 4px;
+  padding: 4px 6px;
   background-color: var(--primary-color);
   color: white;
-  border-radius: 2px;
+  border-radius: 4px;
   font-size: 12px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.all-day-event:hover {
+  opacity: 0.9;
+}
+
+.current-time-indicator {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: #f44336;
+  z-index: 20;
+}
+
+.current-time-indicator::before {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: -4px;
+  width: 10px;
+  height: 10px;
+  background-color: #f44336;
+  border-radius: 50%;
 }
 
 /* Day View Styles */
@@ -2172,3 +2269,4 @@ body.header-hidden .toggle-header-btn {
     display: none;
   }
 }
+```

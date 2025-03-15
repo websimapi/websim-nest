@@ -439,9 +439,54 @@ function renderWeekView(container) {
   const dayOfWeek = currentDate.getDay();
   currentDate.setDate(currentDate.getDate() - dayOfWeek);
   
-  // Create calendar grid
+  // Create calendar week container with better structure
   const calendarWeek = document.createElement('div');
   calendarWeek.className = 'calendar-week';
+  
+  // Create all-day events section
+  const allDaySection = document.createElement('div');
+  allDaySection.className = 'week-all-day-section';
+  
+  // Add the all-day label in the time gutter
+  const allDayLabel = document.createElement('div');
+  allDayLabel.className = 'all-day-label';
+  allDayLabel.textContent = 'All Day';
+  allDaySection.appendChild(allDayLabel);
+  
+  // Add day columns for all-day events
+  for (let i = 0; i < 7; i++) {
+    const dayDate = new Date(currentDate);
+    dayDate.setDate(currentDate.getDate() + i);
+    
+    const allDayCol = document.createElement('div');
+    allDayCol.className = 'all-day-column';
+    allDayCol.dataset.date = dayDate.toISOString().split('T')[0];
+    
+    // Highlight today's column
+    if (isSameDay(dayDate, new Date())) {
+      allDayCol.classList.add('today');
+    }
+    
+    // Highlight selected date's column
+    if (calendarState.selectedDate && isSameDay(dayDate, calendarState.selectedDate)) {
+      allDayCol.classList.add('selected');
+    }
+    
+    // Make column clickable to select date
+    allDayCol.addEventListener('click', () => {
+      // Update selected date
+      calendarState.selectedDate = new Date(dayDate);
+      refreshCalendarView();
+    });
+    
+    allDaySection.appendChild(allDayCol);
+  }
+  
+  calendarWeek.appendChild(allDaySection);
+  
+  // Create time grid container
+  const timeGridContainer = document.createElement('div');
+  timeGridContainer.className = 'time-grid-container';
   
   // Create time gutter
   const timeGutter = document.createElement('div');
@@ -451,11 +496,11 @@ function renderWeekView(container) {
   for (let hour = 5; hour <= 21; hour++) {
     const hourLabel = document.createElement('div');
     hourLabel.className = 'hour-label';
-    hourLabel.textContent = `${hour % 12 === 0 ? 12 : hour % 12} ${hour < 12 ? 'AM' : 'PM'}`;
+    hourLabel.textContent = formatHour(hour);
     timeGutter.appendChild(hourLabel);
   }
   
-  calendarWeek.appendChild(timeGutter);
+  timeGridContainer.appendChild(timeGutter);
   
   // Get today's date for highlighting
   const today = new Date();
@@ -467,24 +512,37 @@ function renderWeekView(container) {
     
     const dayColumn = document.createElement('div');
     dayColumn.className = 'day-column';
+    dayColumn.dataset.date = dayDate.toISOString().split('T')[0];
     
     // Highlight today's column
-    if (
-      dayDate.getDate() === today.getDate() &&
-      dayDate.getMonth() === today.getMonth() &&
-      dayDate.getFullYear() === today.getFullYear()
-    ) {
+    if (isSameDay(dayDate, today)) {
       dayColumn.classList.add('today');
     }
+    
+    // Highlight selected date's column
+    if (calendarState.selectedDate && isSameDay(dayDate, calendarState.selectedDate)) {
+      dayColumn.classList.add('selected');
+    }
+    
+    // Make column clickable to select date
+    dayColumn.addEventListener('click', (e) => {
+      if (e.target === dayColumn || e.target.classList.contains('hour-cell')) {
+        // Update selected date
+        calendarState.selectedDate = new Date(dayDate);
+        refreshCalendarView();
+      }
+    });
     
     // Day header
     const dayHeader = document.createElement('div');
     dayHeader.className = 'day-header';
     
     const weekday = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][dayDate.getDay()];
+    const isToday = isSameDay(dayDate, today);
+    
     dayHeader.innerHTML = `
       <div class="weekday">${weekday}</div>
-      <div class="date">${dayDate.getDate()}</div>
+      <div class="date ${isToday ? 'today' : ''}">${dayDate.getDate()}</div>
     `;
     
     dayColumn.appendChild(dayHeader);
@@ -499,6 +557,11 @@ function renderWeekView(container) {
       hourCell.className = 'hour-cell';
       hourCell.dataset.hour = hour;
       
+      // Add half-hour divider
+      const halfHourDivider = document.createElement('div');
+      halfHourDivider.className = 'half-hour-divider';
+      hourCell.appendChild(halfHourDivider);
+      
       eventsContainer.appendChild(hourCell);
     }
     
@@ -512,60 +575,10 @@ function renderWeekView(container) {
     const dayEvents = getEventsForDateRange(dayStart, dayEnd, calendarCache.events);
     
     if (Array.isArray(dayEvents)) {
-      // Place timed events
-      const timedEvents = dayEvents.filter(event => event.start.dateTime);
-      
-      timedEvents.forEach(event => {
-        // Skip all-day events
-        if (!event.start.dateTime) return;
-        
-        const eventElement = document.createElement('div');
-        eventElement.className = 'week-event';
-        eventElement.dataset.eventId = event.id;
-        
-        // Set color
-        if (event.colorId) {
-          eventElement.style.borderLeftColor = getColorForId(event.colorId);
-        }
-        
-        // Calculate position
-        const startTime = new Date(event.start.dateTime);
-        const endTime = new Date(event.end.dateTime);
-        
-        const startHour = startTime.getHours() + startTime.getMinutes() / 60;
-        const endHour = endTime.getHours() + endTime.getMinutes() / 60;
-        
-        // Skip events outside our displayed range (5am-9pm)
-        if (endHour < 5 || startHour > 21) return;
-        
-        const displayStartHour = Math.max(5, startHour);
-        const displayEndHour = Math.min(21, endHour);
-        
-        const top = (displayStartHour - 5) * 60; // 60px per hour
-        const height = (displayEndHour - displayStartHour) * 60;
-        
-        eventElement.style.top = `${top}px`;
-        eventElement.style.height = `${height}px`;
-        
-        // Format time
-        const formattedStartTime = startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        
-        eventElement.innerHTML = `
-          <div class="event-time">${formattedStartTime}</div>
-          <div class="event-title">${event.summary}</div>
-        `;
-        
-        // Add click event listener
-        eventElement.addEventListener('click', () => showEventDetails(event));
-        
-        eventsContainer.appendChild(eventElement);
-      });
-      
-      // Add all-day events at top
+      // Add all-day events to the all-day section
       const allDayEvents = dayEvents.filter(event => !event.start.dateTime);
       if (allDayEvents.length > 0) {
-        const allDayContainer = document.createElement('div');
-        allDayContainer.className = 'all-day-container';
+        const allDayCol = allDaySection.querySelector(`.all-day-column[data-date="${dayDate.toISOString().split('T')[0]}"]`);
         
         allDayEvents.forEach(event => {
           const eventElement = document.createElement('div');
@@ -579,19 +592,110 @@ function renderWeekView(container) {
           eventElement.textContent = event.summary;
           
           // Add click event listener
-          eventElement.addEventListener('click', () => showEventDetails(event));
+          eventElement.addEventListener('click', (e) => {
+            e.stopPropagation();
+            showEventDetails(event);
+          });
           
-          allDayContainer.appendChild(eventElement);
+          allDayCol.appendChild(eventElement);
         });
+      }
+      
+      // Place timed events
+      const timedEvents = dayEvents.filter(event => event.start.dateTime);
+      
+      // Group overlapping events
+      const eventGroups = groupOverlappingEvents(timedEvents);
+      
+      eventGroups.forEach(group => {
+        const totalWidth = 100; // percent
+        const eventWidth = totalWidth / group.events.length;
         
-        dayColumn.insertBefore(allDayContainer, eventsContainer);
+        group.events.forEach((event, index) => {
+          // Skip all-day events
+          if (!event.start.dateTime) return;
+          
+          const eventElement = document.createElement('div');
+          eventElement.className = 'week-event';
+          eventElement.dataset.eventId = event.id;
+          
+          // Set color
+          const backgroundColor = event.colorId ? 
+            hexToRgba(getColorForId(event.colorId), 0.2) : 
+            'rgba(66, 133, 244, 0.2)';
+          
+          const borderColor = event.colorId ? 
+            getColorForId(event.colorId) : 
+            '#4285F4';
+          
+          eventElement.style.backgroundColor = backgroundColor;
+          eventElement.style.borderLeftColor = borderColor;
+          
+          // Calculate position
+          const startTime = new Date(event.start.dateTime);
+          const endTime = new Date(event.end.dateTime);
+          
+          const startHour = startTime.getHours() + startTime.getMinutes() / 60;
+          const endHour = endTime.getHours() + endTime.getMinutes() / 60;
+          
+          // Skip events outside our displayed range (5am-9pm)
+          if (endHour < 5 || startHour > 21) return;
+          
+          const displayStartHour = Math.max(5, startHour);
+          const displayEndHour = Math.min(21, endHour);
+          
+          const top = (displayStartHour - 5) * 60; // 60px per hour
+          const height = Math.max(30, (displayEndHour - displayStartHour) * 60); // Minimum 30px height
+          
+          // Handle overlapping events
+          const left = index * eventWidth;
+          const width = eventWidth;
+          
+          eventElement.style.top = `${top}px`;
+          eventElement.style.height = `${height}px`;
+          eventElement.style.left = `${left}%`;
+          eventElement.style.width = `${width}%`;
+          
+          // Format time
+          const formattedStartTime = startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          
+          eventElement.innerHTML = `
+            <div class="event-time">${formattedStartTime}</div>
+            <div class="event-title">${event.summary}</div>
+          `;
+          
+          // Add click event listener
+          eventElement.addEventListener('click', (e) => {
+            e.stopPropagation();
+            showEventDetails(event);
+          });
+          
+          eventsContainer.appendChild(eventElement);
+        });
+      });
+      
+      // Add current time indicator if today
+      if (isSameDay(dayDate, today)) {
+        const now = new Date();
+        const currentHour = now.getHours() + now.getMinutes() / 60;
+        
+        if (currentHour >= 5 && currentHour <= 21) {
+          const timeIndicator = document.createElement('div');
+          timeIndicator.className = 'current-time-indicator';
+          
+          const top = (currentHour - 5) * 60;
+          timeIndicator.style.top = `${top}px`;
+          
+          eventsContainer.appendChild(timeIndicator);
+        }
       }
     }
     
     dayColumn.appendChild(eventsContainer);
-    calendarWeek.appendChild(dayColumn);
+    timeGridContainer.appendChild(dayColumn);
   }
   
+  calendarWeek.appendChild(timeGridContainer);
   container.appendChild(calendarWeek);
 }
 
@@ -1766,4 +1870,64 @@ function refreshCalendarView() {
       renderCalendar(); // Still render even if there's an error
     });
   }
+}
+
+// Helper function to format hour
+function formatHour(hour) {
+  return `${hour % 12 === 0 ? 12 : hour % 12} ${hour < 12 ? 'AM' : 'PM'}`;
+}
+
+// Helper function to check if two dates are the same day
+function isSameDay(date1, date2) {
+  return date1.getDate() === date2.getDate() && 
+         date1.getMonth() === date2.getMonth() && 
+         date1.getFullYear() === date2.getFullYear();
+}
+
+// Helper function to convert hex color to rgba
+function hexToRgba(hex, alpha = 1) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+// Group overlapping events
+function groupOverlappingEvents(events) {
+  if (!events || events.length === 0) return [];
+  
+  // Sort events by start time
+  events.sort((a, b) => {
+    return new Date(a.start.dateTime) - new Date(b.start.dateTime);
+  });
+  
+  const groups = [];
+  let currentGroup = { events: [events[0]] };
+  groups.push(currentGroup);
+  
+  for (let i = 1; i < events.length; i++) {
+    const currentEvent = events[i];
+    const currentStart = new Date(currentEvent.start.dateTime);
+    
+    // Check if this event overlaps with any event in the current group
+    let overlaps = false;
+    for (const groupEvent of currentGroup.events) {
+      const groupEventEnd = new Date(groupEvent.end.dateTime);
+      if (currentStart < groupEventEnd) {
+        overlaps = true;
+        break;
+      }
+    }
+    
+    if (overlaps) {
+      // Add to current group if overlapping
+      currentGroup.events.push(currentEvent);
+    } else {
+      // Start a new group if not overlapping
+      currentGroup = { events: [currentEvent] };
+      groups.push(currentGroup);
+    }
+  }
+  
+  return groups;
 }

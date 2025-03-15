@@ -399,8 +399,8 @@ function renderDayView(container) {
   const timeGutter = document.createElement('div');
   timeGutter.className = 'time-gutter';
   
-  // Add hour labels (1 AM to 12 AM) - updated to show all 24 hours
-  for (let hour = 0; hour < 24; hour++) {
+  // Add hour labels (12am to 11pm)
+  for (let hour = 0; hour <= 23; hour++) {
     const hourLabel = document.createElement('div');
     hourLabel.className = 'hour-label';
     const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
@@ -415,8 +415,8 @@ function renderDayView(container) {
   const eventsContainer = document.createElement('div');
   eventsContainer.className = 'day-events-container';
   
-  // Create hour grid for all 24 hours
-  for (let hour = 0; hour < 24; hour++) {
+  // Create hour grid
+  for (let hour = 0; hour <= 23; hour++) {
     const hourCell = document.createElement('div');
     hourCell.className = 'hour-cell';
     hourCell.dataset.hour = hour;
@@ -504,14 +504,10 @@ function renderDayView(container) {
       const startHour = startTime.getHours() + startTime.getMinutes() / 60;
       const endHour = endTime.getHours() + endTime.getMinutes() / 60;
       
-      // Skip events outside our displayed range (5am-9pm)
-      if (endHour < 5 || startHour > 21) return;
+      // No need to skip events outside range since we show all 24 hours
       
-      const displayStartHour = Math.max(5, startHour);
-      const displayEndHour = Math.min(21, endHour);
-      
-      const top = (displayStartHour - 5) * 60; // 60px per hour
-      const height = (displayEndHour - displayStartHour) * 60;
+      const top = startHour * 60; // 60px per hour
+      const height = Math.max(30, (endHour - startHour) * 60);
       
       eventElement.style.top = `${top}px`;
       eventElement.style.height = `${height}px`;
@@ -542,15 +538,13 @@ function renderDayView(container) {
       const now = new Date();
       const currentHour = now.getHours() + now.getMinutes() / 60;
       
-      if (currentHour >= 5 && currentHour <= 21) {
-        const timeIndicator = document.createElement('div');
-        timeIndicator.className = 'current-time-indicator';
-        
-        const top = (currentHour - 5) * 60;
-        timeIndicator.style.top = `${top}px`;
-        
-        eventsContainer.appendChild(timeIndicator);
-      }
+      const timeIndicator = document.createElement('div');
+      timeIndicator.className = 'current-time-indicator';
+      
+      const top = currentHour * 60;
+      timeIndicator.style.top = `${top}px`;
+      
+      eventsContainer.appendChild(timeIndicator);
     }
   }
   

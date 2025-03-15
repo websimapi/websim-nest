@@ -428,14 +428,56 @@ h1 {
   color: var(--text-secondary);
   border-bottom: 1px solid var(--border-color);
   position: relative;
-  box-sizing: border-box;
+}
+
+.day-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border-color);
+  min-width: 100px;
+  position: relative;
+}
+
+.day-column:last-child {
+  border-right: none;
+}
+
+.day-column.today {
+  background-color: rgba(66, 133, 244, 0.05);
+}
+
+.day-header {
+  padding: 8px;
+  text-align: center;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--background-light);
+  z-index: 5;
+  position: sticky;
+  top: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.day-header .weekday {
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.day-header .date {
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.day-events-container {
+  flex: 1;
+  position: relative;
+  overflow: visible;
 }
 
 .hour-cell {
   height: 60px;
   border-bottom: 1px solid var(--border-color);
   position: relative;
-  box-sizing: border-box;
 }
 
 .hour-cell.working-hours {

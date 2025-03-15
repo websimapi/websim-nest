@@ -513,11 +513,11 @@ function renderWeekView(container) {
     
     if (Array.isArray(dayEvents)) {
       // Place timed events
-      const timedEvents = dayEvents.filter(event => event.start && event.start.dateTime);
+      const timedEvents = dayEvents.filter(event => event.start.dateTime);
       
       timedEvents.forEach(event => {
         // Skip all-day events
-        if (!event.start || !event.start.dateTime) return;
+        if (!event.start.dateTime) return;
         
         const eventElement = document.createElement('div');
         eventElement.className = 'week-event';
@@ -562,7 +562,7 @@ function renderWeekView(container) {
       });
       
       // Add all-day events at top
-      const allDayEvents = dayEvents.filter(event => event.start && !event.start.dateTime);
+      const allDayEvents = dayEvents.filter(event => !event.start.dateTime);
       if (allDayEvents.length > 0) {
         const allDayContainer = document.createElement('div');
         allDayContainer.className = 'all-day-container';
@@ -661,7 +661,7 @@ function renderDayView(container) {
   
   if (Array.isArray(dayEvents)) {
     // Add all-day events section if needed
-    const allDayEvents = dayEvents.filter(event => event.start && !event.start.dateTime);
+    const allDayEvents = dayEvents.filter(event => !event.start.dateTime);
     if (allDayEvents.length > 0) {
       const allDaySection = document.createElement('div');
       allDaySection.className = 'all-day-section';
@@ -697,11 +697,9 @@ function renderDayView(container) {
     }
     
     // Place timed events
-    const timedEvents = dayEvents.filter(event => event.start && event.start.dateTime);
+    const timedEvents = dayEvents.filter(event => event.start.dateTime);
     
     timedEvents.forEach(event => {
-      if (!event.start || !event.start.dateTime || !event.end || !event.end.dateTime) return;
-      
       const eventElement = document.createElement('div');
       eventElement.className = 'day-event';
       eventElement.dataset.eventId = event.id;
@@ -808,13 +806,9 @@ function renderListView(container) {
   const eventsByDate = {};
   
   events.forEach(event => {
-    if (!event.start) return;
-    
     const date = event.start.dateTime 
       ? new Date(event.start.dateTime).toDateString() 
-      : event.start.date ? new Date(event.start.date).toDateString() : null;
-    
-    if (!date) return;
+      : new Date(event.start.date).toDateString();
     
     if (!eventsByDate[date]) {
       eventsByDate[date] = [];
@@ -855,16 +849,13 @@ function renderListView(container) {
     
     // Sort events by time
     dateEvents.sort((a, b) => {
-      if (!a.start || !b.start) return 0;
-      const aTime = a.start.dateTime ? new Date(a.start.dateTime) : a.start.date ? new Date(a.start.date) : new Date();
-      const bTime = b.start.dateTime ? new Date(b.start.dateTime) : b.start.date ? new Date(b.start.date) : new Date();
+      const aTime = a.start.dateTime ? new Date(a.start.dateTime) : new Date(a.start.date);
+      const bTime = b.start.dateTime ? new Date(b.start.dateTime) : new Date(b.start.date);
       return aTime - bTime;
     });
     
     // Add each event
     dateEvents.forEach(event => {
-      if (!event.start || !event.end) return;
-      
       const eventItem = document.createElement('div');
       eventItem.className = 'list-event-item';
       eventItem.dataset.eventId = event.id;
@@ -880,7 +871,7 @@ function renderListView(container) {
       
       // Format time
       let timeStr = 'All day';
-      if (event.start.dateTime && event.end.dateTime) {
+      if (event.start.dateTime) {
         const startTime = new Date(event.start.dateTime);
         const endTime = new Date(event.end.dateTime);
         timeStr = `${startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
@@ -1744,19 +1735,16 @@ function getEventsForDateRange(startDate, endDate, eventsArray = null) {
   }
   
   return events.filter(event => {
-    // Verify event has required properties
-    if (!event || !event.start || !event.end) return false;
-    
     // Get event start/end times
-    const eventStart = event.start.dateTime 
+    const eventStart = event.start?.dateTime 
       ? new Date(event.start.dateTime)
-      : event.start.date 
+      : event.start?.date 
         ? new Date(event.start.date)
         : null;
     
-    const eventEnd = event.end.dateTime
+    const eventEnd = event.end?.dateTime
       ? new Date(event.end.dateTime)
-      : event.end.date
+      : event.end?.date
         ? new Date(event.end.date)
         : null;
     

@@ -409,6 +409,12 @@ h1 {
   min-height: 700px;
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
+  scrollbar-width: none; /* Hide scrollbar for Firefox */
+  -ms-overflow-style: none; /* Hide scrollbar for IE and Edge */
+}
+
+.calendar-week::-webkit-scrollbar {
+  display: none; /* Hide scrollbar for Chrome, Safari, and Opera */
 }
 
 .time-gutter {
@@ -456,6 +462,7 @@ h1 {
   z-index: 5;
   position: sticky;
   top: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .day-header .weekday {
@@ -543,6 +550,35 @@ h1 {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Week View Scroll Controls */
+.week-scroll-controls {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 100;
+}
+
+.week-scroll-controls .btn {
+  background-color: var(--background-light);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  opacity: 0.7;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.week-scroll-controls .btn:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+/* Add smooth scrolling to all elements */
+html {
+  scroll-behavior: smooth;
 }
 
 /* Day View Styles */

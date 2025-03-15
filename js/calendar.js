@@ -22,11 +22,15 @@
           allDayContainer.appendChild(eventElement);
         });
         
-        // Fix: Simply append to dayColumn - don't use insertBefore
         dayColumn.appendChild(allDayContainer);
       }
-    }
-    
-    dayColumn.appendChild(eventsContainer);
-    calendarWeek.appendChild(dayColumn);
+      
+      // Add timed events
+      const timedEvents = dayEvents.filter(event => event.start.dateTime);
+      timedEvents.forEach(event => {
+          // Event rendering code here
+      });
+      
+      dayColumn.appendChild(eventsContainer);
+      calendarWeek.appendChild(dayColumn);
 // ... existing code ...

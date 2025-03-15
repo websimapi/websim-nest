@@ -447,6 +447,12 @@ function renderWeekView(container) {
   const timeGutter = document.createElement('div');
   timeGutter.className = 'time-gutter';
   
+  // Add all-day header to time gutter
+  const allDayHeader = document.createElement('div');
+  allDayHeader.className = 'all-day-header';
+  allDayHeader.textContent = 'All Day';
+  timeGutter.appendChild(allDayHeader);
+  
   // Add hour labels (5 AM to 9 PM)
   for (let hour = 5; hour <= 21; hour++) {
     const hourLabel = document.createElement('div');
@@ -467,6 +473,7 @@ function renderWeekView(container) {
     
     const dayColumn = document.createElement('div');
     dayColumn.className = 'day-column';
+    dayColumn.dataset.date = dayDate.toISOString().split('T')[0];
     
     // Highlight today's column
     if (
@@ -477,6 +484,14 @@ function renderWeekView(container) {
       dayColumn.classList.add('today');
     }
     
+    // Highlight selected date's column
+    if (calendarState.selectedDate && 
+        dayDate.getDate() === calendarState.selectedDate.getDate() &&
+        dayDate.getMonth() === calendarState.selectedDate.getMonth() &&
+        dayDate.getFullYear() === calendarState.selectedDate.getFullYear()) {
+      dayColumn.classList.add('selected');
+    }
+    
     // Day header
     const dayHeader = document.createElement('div');
     dayHeader.className = 'day-header';
@@ -484,10 +499,27 @@ function renderWeekView(container) {
     const weekday = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][dayDate.getDay()];
     dayHeader.innerHTML = `
       <div class="weekday">${weekday}</div>
-      <div class="date">${dayDate.getDate()}</div>
+      <div class="date${dayDate.toDateString() === today.toDateString() ? ' today' : ''}">${dayDate.getDate()}</div>
     `;
     
+    // Make day header clickable to select date
+    dayHeader.addEventListener('click', () => {
+      // Clear previous selection
+      document.querySelectorAll('.day-column.selected').forEach(col => {
+        col.classList.remove('selected');
+      });
+      
+      // Set new selection
+      dayColumn.classList.add('selected');
+      calendarState.selectedDate = new Date(dayDate);
+    });
+    
     dayColumn.appendChild(dayHeader);
+    
+    // All-day events container
+    const allDayContainer = document.createElement('div');
+    allDayContainer.className = 'all-day-container';
+    dayColumn.appendChild(allDayContainer);
     
     // Event container for timed events
     const eventsContainer = document.createElement('div');
@@ -498,6 +530,25 @@ function renderWeekView(container) {
       const hourCell = document.createElement('div');
       hourCell.className = 'hour-cell';
       hourCell.dataset.hour = hour;
+      
+      // Add half-hour divider
+      const halfHourDivider = document.createElement('div');
+      halfHourDivider.className = 'half-hour-divider';
+      hourCell.appendChild(halfHourDivider);
+      
+      // Make cell clickable for adding events
+      hourCell.addEventListener('click', () => {
+        // Set selected date
+        calendarState.selectedDate = new Date(dayDate);
+        
+        // Calculate time from click position
+        const eventTime = `${hour.toString().padStart(2, '0')}:00`;
+        
+        // Show add event modal with this date and time
+        const dateWithTime = new Date(dayDate);
+        dateWithTime.setHours(hour, 0, 0, 0);
+        showAddEventModal(dateWithTime);
+      });
       
       eventsContainer.appendChild(hourCell);
     }
@@ -511,62 +562,17 @@ function renderWeekView(container) {
     
     const dayEvents = getEventsForDateRange(dayStart, dayEnd, calendarCache.events);
     
-    if (Array.isArray(dayEvents)) {
-      // Place timed events
+    if (Array.isArray(dayEvents) && dayEvents.length > 0) {
+      // Separate all-day and timed events
+      const allDayEvents = dayEvents.filter(event => !event.start.dateTime);
       const timedEvents = dayEvents.filter(event => event.start.dateTime);
       
-      timedEvents.forEach(event => {
-        // Skip all-day events
-        if (!event.start.dateTime) return;
-        
-        const eventElement = document.createElement('div');
-        eventElement.className = 'week-event';
-        eventElement.dataset.eventId = event.id;
-        
-        // Set color
-        if (event.colorId) {
-          eventElement.style.borderLeftColor = getColorForId(event.colorId);
-        }
-        
-        // Calculate position
-        const startTime = new Date(event.start.dateTime);
-        const endTime = new Date(event.end.dateTime);
-        
-        const startHour = startTime.getHours() + startTime.getMinutes() / 60;
-        const endHour = endTime.getHours() + endTime.getMinutes() / 60;
-        
-        // Skip events outside our displayed range (5am-9pm)
-        if (endHour < 5 || startHour > 21) return;
-        
-        const displayStartHour = Math.max(5, startHour);
-        const displayEndHour = Math.min(21, endHour);
-        
-        const top = (displayStartHour - 5) * 60; // 60px per hour
-        const height = (displayEndHour - displayStartHour) * 60;
-        
-        eventElement.style.top = `${top}px`;
-        eventElement.style.height = `${height}px`;
-        
-        // Format time
-        const formattedStartTime = startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        
-        eventElement.innerHTML = `
-          <div class="event-time">${formattedStartTime}</div>
-          <div class="event-title">${event.summary}</div>
-        `;
-        
-        // Add click event listener
-        eventElement.addEventListener('click', () => showEventDetails(event));
-        
-        eventsContainer.appendChild(eventElement);
-      });
+      // Track event columns for layout
+      let eventColumns = [];
+      let maxColumn = 0;
       
-      // Add all-day events at top
-      const allDayEvents = dayEvents.filter(event => !event.start.dateTime);
+      // Process all-day events
       if (allDayEvents.length > 0) {
-        const allDayContainer = document.createElement('div');
-        allDayContainer.className = 'all-day-container';
-        
         allDayEvents.forEach(event => {
           const eventElement = document.createElement('div');
           eventElement.className = 'all-day-event';
@@ -583,8 +589,126 @@ function renderWeekView(container) {
           
           allDayContainer.appendChild(eventElement);
         });
+      }
+      
+      // Calculate event positioning to avoid overlaps
+      timedEvents.forEach(event => {
+        const startTime = new Date(event.start.dateTime);
+        const endTime = new Date(event.end.dateTime);
         
-        dayColumn.insertBefore(allDayContainer, eventsContainer);
+        // Find a column for this event
+        let column = 0;
+        while (
+          eventColumns[column] && 
+          eventColumns[column] > startTime
+        ) {
+          column++;
+        }
+        
+        // Save this event's end time in its column
+        eventColumns[column] = endTime;
+        
+        // Track maximum column
+        maxColumn = Math.max(maxColumn, column);
+        
+        // Store column for later use
+        event._column = column;
+        event._maxColumn = maxColumn;
+      });
+      
+      // Place timed events
+      timedEvents.forEach(event => {
+        // Skip all-day events
+        if (!event.start.dateTime) return;
+        
+        const eventElement = document.createElement('div');
+        eventElement.className = 'week-event';
+        eventElement.dataset.eventId = event.id;
+        
+        // Set color
+        if (event.colorId) {
+          eventElement.style.borderLeftColor = getColorForId(event.colorId);
+          eventElement.style.backgroundColor = `${getColorForId(event.colorId)}22`; // Add transparency
+        }
+        
+        // Calculate position
+        const startTime = new Date(event.start.dateTime);
+        const endTime = new Date(event.end.dateTime);
+        
+        const startHour = startTime.getHours() + startTime.getMinutes() / 60;
+        const endHour = endTime.getHours() + endTime.getMinutes() / 60;
+        
+        // Skip events outside our displayed range (5am-9pm)
+        if (endHour < 5 || startHour > 21) return;
+        
+        const displayStartHour = Math.max(5, startHour);
+        const displayEndHour = Math.min(21, endHour);
+        
+        const top = (displayStartHour - 5) * 60; // 60px per hour
+        const height = Math.max(30, (displayEndHour - displayStartHour) * 60); // Minimum height of 30px
+        
+        eventElement.style.top = `${top}px`;
+        eventElement.style.height = `${height}px`;
+        
+        // Handle overlapping events
+        const column = event._column;
+        const totalColumns = event._maxColumn + 1;
+        const width = 100 / totalColumns;
+        const left = width * column;
+        
+        eventElement.style.width = `calc(${width}% - 4px)`;
+        eventElement.style.left = `${left}%`;
+        
+        // Format time
+        const formattedStartTime = startTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        const formattedEndTime = endTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        
+        eventElement.innerHTML = `
+          <div class="event-time">${formattedStartTime} - ${formattedEndTime}</div>
+          <div class="event-title">${event.summary}</div>
+          ${event.location ? `<div class="event-location"><i class="material-icons">place</i> ${event.location}</div>` : ''}
+        `;
+        
+        // Add click event listener
+        eventElement.addEventListener('click', (e) => {
+          e.stopPropagation(); // Prevent day cell click
+          showEventDetails(event);
+        });
+        
+        // Make events draggable
+        eventElement.draggable = true;
+        eventElement.addEventListener('dragstart', (e) => {
+          e.dataTransfer.setData('text/plain', event.id);
+          eventElement.classList.add('dragging');
+        });
+        
+        eventElement.addEventListener('dragend', () => {
+          eventElement.classList.remove('dragging');
+        });
+        
+        eventsContainer.appendChild(eventElement);
+      });
+    }
+    
+    // Make day column droppable for events
+    dayColumn.addEventListener('dragover', handleDragOver);
+    dayColumn.addEventListener('drop', handleDrop);
+    dayColumn.addEventListener('dragleave', (e) => {
+      e.currentTarget.classList.remove('drag-over');
+    });
+    
+    // Add current time indicator if this is today
+    if (dayDate.toDateString() === today.toDateString()) {
+      const currentHour = today.getHours() + today.getMinutes() / 60;
+      
+      if (currentHour >= 5 && currentHour <= 21) {
+        const timeIndicator = document.createElement('div');
+        timeIndicator.className = 'current-time-indicator';
+        
+        const top = (currentHour - 5) * 60;
+        timeIndicator.style.top = `${top}px`;
+        
+        eventsContainer.appendChild(timeIndicator);
       }
     }
     

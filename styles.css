@@ -405,7 +405,8 @@ h1 {
   border-top: 1px solid var(--border-color);
   position: relative;
   overflow-x: auto;
-  overflow-y: hidden;
+  overflow-y: auto;
+  min-height: 700px;
 }
 
 .time-gutter {

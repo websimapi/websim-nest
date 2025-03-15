@@ -204,11 +204,11 @@ function renderWeekView(container) {
   const timeGutter = document.createElement('div');
   timeGutter.className = 'time-gutter';
   
-  // Add hour labels (5 AM to 9 PM)
-  for (let hour = 5; hour <= 21; hour++) {
+  // Add hour labels (1 AM to 12 AM) - updated to show all 24 hours
+  for (let hour = 1; hour <= 24; hour++) {
     const hourLabel = document.createElement('div');
     hourLabel.className = 'hour-label';
-    hourLabel.textContent = `${hour % 12 === 0 ? 12 : hour % 12} ${hour < 12 ? 'AM' : 'PM'}`;
+    hourLabel.textContent = `${hour % 12 === 0 ? 12 : hour % 12} ${hour < 12 || hour === 24 ? 'AM' : 'PM'}`;
     timeGutter.appendChild(hourLabel);
   }
   
@@ -250,8 +250,8 @@ function renderWeekView(container) {
     const eventsContainer = document.createElement('div');
     eventsContainer.className = 'day-events-container';
     
-    // Create hour grid
-    for (let hour = 5; hour <= 21; hour++) {
+    // Create hour grid for all 24 hours
+    for (let hour = 1; hour <= 24; hour++) {
       const hourCell = document.createElement('div');
       hourCell.className = 'hour-cell';
       hourCell.dataset.hour = hour;
@@ -293,14 +293,9 @@ function renderWeekView(container) {
         const startHour = startTime.getHours() + startTime.getMinutes() / 60;
         const endHour = endTime.getHours() + endTime.getMinutes() / 60;
         
-        // Skip events outside our displayed range (5am-9pm)
-        if (endHour < 5 || startHour > 21) return;
-        
-        const displayStartHour = Math.max(5, startHour);
-        const displayEndHour = Math.min(21, endHour);
-        
-        const top = (displayStartHour - 5) * 60; // 60px per hour
-        const height = (displayEndHour - displayStartHour) * 60;
+        // Position based on actual hour (1-24 scale)
+        const top = startHour * 60; // 60px per hour
+        const height = (endHour - startHour) * 60;
         
         eventElement.style.top = `${top}px`;
         eventElement.style.height = `${height}px`;

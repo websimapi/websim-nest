@@ -268,7 +268,7 @@ function renderWeekView(container) {
     
     const dayEvents = getEventsForDateRange(dayStart, dayEnd, calendarCache.events);
     
-    if (Array.isArray(dayEvents)) {
+    if (Array.isArray(dayEvents) && dayEvents.length > 0) {
       // Place timed events
       const timedEvents = dayEvents.filter(event => event.start.dateTime);
       
@@ -283,6 +283,7 @@ function renderWeekView(container) {
         // Set color
         if (event.colorId) {
           eventElement.style.borderLeftColor = getColorForId(event.colorId);
+          eventElement.style.backgroundColor = `${getColorForId(event.colorId)}22`; // Add transparency
         }
         
         // Calculate position

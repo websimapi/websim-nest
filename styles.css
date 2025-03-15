@@ -404,6 +404,8 @@ h1 {
   height: 700px;
   border-top: 1px solid var(--border-color);
   position: relative;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .time-gutter {
@@ -429,7 +431,6 @@ h1 {
   flex-direction: column;
   border-right: 1px solid var(--border-color);
   min-width: 100px;
-  overflow: hidden;
   position: relative;
 }
 
@@ -462,22 +463,13 @@ h1 {
 .day-events-container {
   flex: 1;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .hour-cell {
   height: 60px;
   border-bottom: 1px solid var(--border-color);
   position: relative;
-}
-
-.half-hour-divider {
-  position: absolute;
-  top: 50%;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background-color: rgba(0, 0, 0, 0.05);
 }
 
 .week-event {
@@ -508,6 +500,8 @@ h1 {
   background-color: rgba(0, 0, 0, 0.02);
   border-bottom: 1px solid var(--border-color);
   min-height: 24px;
+  max-height: 100px;
+  overflow-y: auto;
 }
 
 .all-day-event {
